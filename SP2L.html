@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اسکنر SP2L بایننس</title>
+<style>
+:root{--bg:#0f1720;--panel:#16212d;--line:#243344;--tx:#e6edf3;--mut:#8a9bb0;--up:#22c55e;--dn:#ef4444;--ac:#e0b341}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6f8;--panel:#fff;--line:#d9e0e7;--tx:#16212d;--mut:#5b6b7d;--up:#15803d;--dn:#b91c1c;--ac:#a16207}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.7 Vazirmatn,Tahoma,sans-serif;padding:16px}
+.wrap{max-width:1180px;margin:auto}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--mut);margin:0 0 14px;font-size:13px}
+.ctl{display:flex;flex-wrap:wrap;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;align-items:end}
+.ctl label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
+.ctl label.r{flex-direction:row;align-items:center;gap:6px}
+select,input,button{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+input{width:100px}
+input[type=checkbox]{width:auto;accent-color:var(--ac)}
+button{cursor:pointer;background:var(--ac);color:#111;border:0;font-weight:700}
+button.g{background:var(--line);color:var(--tx)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.st{margin:10px 2px;color:var(--mut);font-size:13px;min-height:22px}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mut);font-weight:600}
+td.n{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.tag{padding:2px 9px;border-radius:12px;font-size:12px;border:1px solid currentColor}
+a{color:var(--ac)}
+.note{margin-top:14px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>اسکنر استراتژی SP2L (اسپایک + دو لگ)</h1>
+<p class="sub">بازار اسپات، جفت‌های USDT — داده‌های عمومی بایننس، بدون API Key — فقط کندل‌های بسته‌شده</p>
+
+<div class="ctl">
+ <label>کندل<select id="tf"><option value="1m">۱ دقیقه</option><option value="5m" selected>۵ دقیقه</option><option value="15m">۱۵ دقیقه</option></select></label>
+ <label>جهت<select id="mode"><option value="both">هر دو</option><option value="up">فقط خرید</option><option value="down">فقط فروش</option></select></label>
+ <label>تعداد ارز پرحجم<input id="top" type="number" min="10" max="400" value="150"></label>
+ <label>حداقل حجم ۲۴ساعته (USDT)<input id="vol" type="number" min="0" step="100000" value="2000000"></label>
+ <label title="اندازه کندل اسپایک حداقل چند برابر میانگین رنج N کندل قبل باشد">حداقل اندازه اسپایک (× میانگین)<input id="mult" type="number" min="1" step="0.1" value="2"></label>
+ <label>کندل‌های میانگین<input id="avgN" type="number" min="5" max="40" value="20"></label>
+ <label title="حداقل نسبت بدنه به کل کندل اسپایک">حداقل بدنه (٪)<input id="body" type="number" min="1" max="100" value="65"></label>
+ <label title="بعد از اسپایک حداکثر چند کندل برای پولبک صبر شود">حداکثر صبر پولبک (کندل)<input id="wait" type="number" min="3" max="60" value="20"></label>
+ <label>حداقل لگ پولبک<select id="legs"><option value="2" selected>۲ لگ</option><option value="1">۱ لگ</option></select></label>
+ <label title="لمس: ورود روی کف/سقف آخرین کندل اسپایک؛ تایید: لمس و سپس بسته‌شدن کندل به سمت اسپایک">نوع ورود<select id="emode"><option value="touch">لمس سطح (طبق منبع)</option><option value="confirm">لمس + کندل تایید</option></select></label>
+ <label>حداکثر ریسک (٪)<input id="maxRisk" type="number" min="0.1" step="0.1" value="3"></label>
+ <label title="سیگنال ورود حداکثر چند کندل پیش فعال شده باشد">تازگی سیگنال (کندل)<input id="fresh" type="number" min="1" max="10" value="3"></label>
+ <label class="r"><input id="watch" type="checkbox" checked>نمایش «در انتظار ورود»</label>
+ <label class="r"><input id="alWatch" type="checkbox">هشدار برای «در انتظار» هم</label>
+ <label class="r"><input id="snd" type="checkbox" checked>هشدار صوتی</label>
+ <button class="g" id="tst">تست صدا</button>
+ <button class="g" id="pause">توقف خودکار</button>
+ <button id="go">اسکن الان</button>
+</div>
+<div class="st" id="st">آماده…</div>
+
+<div class="tw"><table>
+<thead><tr><th>ارز</th><th>جهت</th><th>وضعیت</th><th>ورود</th><th>حد ضرر (A)</th><th>TP1 ‏۱:۱</th><th>TP2 ‏۱:۲</th><th>ریسک</th><th>قیمت فعلی</th><th>اسپایک (× / بدنه)</th><th>لگ</th><th>سن</th><th></th></tr></thead>
+<tbody id="rows"><tr><td colspan="13" style="color:var(--mut)">در حال بارگیری…</td></tr></tbody>
+</table></div>
+
+<div class="note">
+قوانین پیاده‌سازی‌شده (بر اساس منابع عمومی SP2L پورصمدی):
+<br>۱) اسپایک: سه کندل هم‌جهت که کندل وسط حرکت تند دارد، بین کندل اول و سوم گپ (شکاف) است، بدنه کندل وسط حداقل ۶۵٪ کل آن و اندازه‌اش از حداقل تعریف‌شده بزرگ‌تر است. کندل‌های بعدی هم‌رنگ با کف بالاتر (یا سقف پایین‌تر در فروش) جزو اسپایک حساب می‌شوند.
+<br>۲) نقطه A = ابتدای موج AB (کم‌ترین کف اسپایک در خرید / بیشترین سقف در فروش) و محل حد ضرر است.
+<br>۳) پولبک دو لگ: قیمت به کف آخرین کندل اسپایک (در فروش: سقف) برمی‌گردد؛ ورود هنگام لمس این سطح در لگ دوم است. فاصله ورود تا A ریسک است و TP1 با نسبت ۱:۱ و TP2 با ۱:۲ محاسبه می‌شود.
+<br>۴) اگر قیمت قبل از ورود به A برسد، ستاپ باطل است. اگر همان کندل هم TP و هم SL را لمس کند، SL فرض می‌شود.
+<br>منابع دقیق رسمی کد را منتشر نکرده‌اند؛ آستانه‌های «اندازه اسپایک»، «لگ‌ها» و «ورود» تفسیر ما از توضیحات است و قابل تنظیم است. بک‌تست نشده؛ توصیه مالی نیست.
+</div>
+</div>
+
+<script>
+const BASES=['https://api.binance.com','https://data-api.binance.vision'];
+const $=id=>document.getElementById(id);
+const cache=new Map();let blocked=0,infoCache=null,left=30,paused=false,busy=false,actx=null,lastRows=[],allHits=[];
+async function api(path){
+ const kl=path.includes('/klines?');
+ if(kl&&cache.has(path))return cache.get(path);
+ let err;
+ for(const b of BASES){
+  if(Date.now()<blocked)throw new Error('محدودیت درخواست؛ کمی صبر کنید');
+  try{
+   const r=await fetch(b+path,{signal:AbortSignal.timeout(20000)});
+   if(r.status===429||r.status===418){blocked=Date.now()+60000;throw new Error('HTTP '+r.status)}
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const d=await r.json();
+   if(kl){cache.set(path,d);if(cache.size>1500)cache.delete(cache.keys().next().value)}
+   return d;
+  }catch(e){err=e}
+ }
+ throw err;
+}
+
+// تشخیص SP2L روی کندل‌های بسته؛ برای هر دو جهت (d=1 خرید، d=-1 فروش)
+function sp2l(k,cf){
+ const n=k.length,o=k.map(x=>+x[1]),h=k.map(x=>+x[2]),l=k.map(x=>+x[3]),c=k.map(x=>+x[4]),t=k.map(x=>+x[0]);
+ const rg=h.map((v,i)=>v-l[i]),res=[];
+ for(let i=Math.max(cf.avgN+1,n-cf.lookback);i<n-1;i++){
+  for(const d of [1,-1]){
+   if((cf.mode==='up'&&d<0)||(cf.mode==='down'&&d>0))continue;
+   const bd=d*(c[i]-o[i]);
+   if(!(bd>0&&rg[i]>0&&bd/rg[i]>=cf.body))continue;
+   if(!(d>0?l[i+1]>h[i-1]:h[i+1]<l[i-1]))continue; // گپ بین کندل اول و سوم
+   let avg=0;for(let j=i-1-cf.avgN;j<i-1;j++)avg+=rg[j];avg/=cf.avgN;
+   if(!(avg>0&&rg[i]>=avg*cf.mult))continue;
+   // پایان لگ اسپایک: کندل‌های هم‌رنگ با کف بالاتر / سقف پایین‌تر
+   let e=i+1;
+   while(e+1<n&&d*(c[e+1]-o[e+1])>0&&(d>0?l[e+1]>l[e]:h[e+1]<h[e]))e++;
+   let A=d>0?Infinity:-Infinity;
+   for(let j=i-1;j<=e;j++)A=d>0?Math.min(A,l[j]):Math.max(A,h[j]);
+   const level=d>0?l[e]:h[e],risk=d*(level-A);
+   if(!(risk>0)||risk/level*100>cf.maxRisk)continue;
+   // پولبک
+   let legs=0,prevAg=false,trig=-1,entry=0,dead=false;
+   for(let j=e+1;j<n&&j<=e+cf.wait;j++){
+    if(d>0?l[j]<=A:h[j]>=A){dead=true;break}
+    const ag=d*(c[j]-o[j])<0;
+    if(ag&&!prevAg)legs++;
+    prevAg=ag;
+    const touch=d>0?l[j]<=level:h[j]>=level;
+    if(!touch)continue;
+    if(cf.emode==='touch'){
+     if(legs>=cf.legs){trig=j;entry=level}else dead=true; // سطح قبل از لگ دوم مصرف شد
+     break;
+    }
+    if(legs>=cf.legs&&(d>0?c[j]>level:c[j]<level)){trig=j;entry=c[j];break}
+   }
+   if(dead)continue;
+   const base={d,A,level,legs,spikeT:t[i],mult:rg[i]/avg,bodyP:bd/rg[i]*100,ext:e};
+   if(trig>=0){
+    const r=d*(entry-A);if(!(r>0)||r/entry*100>cf.maxRisk)continue;
+    const tp1=entry+d*r,tp2=entry+2*d*r;
+    let st='entry';
+    for(let j=trig+1;j<n;j++){ // SL اول، چون ترتیب داخل کندل معلوم نیست
+     if(d>0?l[j]<=A:h[j]>=A){st='sl';break}
+     if(d>0?h[j]>=tp1:l[j]<=tp1){st='tp';break}
+    }
+    if(st!=='entry'||n-1-trig>=cf.fresh)continue;
+    res.push({...base,status:'entry',entry,tp1,tp2,risk:r/entry*100,age:n-1-trig,trigT:t[trig],price:c[n-1]});
+   }else if(n-1-e<=cf.wait){
+    res.push({...base,status:'watch',entry:level,tp1:level+d*risk,tp2:level+2*d*risk,risk:risk/level*100,age:n-1-e,trigT:t[e],price:c[n-1]});
+   }
+  }
+ }
+ const ent=res.filter(r=>r.status==='entry').sort((a,b)=>a.age-b.age)[0];
+ return ent||res.filter(r=>r.status==='watch').sort((a,b)=>a.age-b.age)[0]||null;
+}
+
+const fmt=p=>p>=100?p.toFixed(2):p>=1?p.toFixed(4):p.toPrecision(4);
+function cfg(){
+ return{mode:$('mode').value,mult:+$('mult').value,avgN:Math.round(+$('avgN').value),body:+$('body').value/100,wait:Math.round(+$('wait').value),
+  legs:+$('legs').value,emode:$('emode').value,maxRisk:+$('maxRisk').value,fresh:Math.round(+$('fresh').value),lookback:60};
+}
+async function scan(){
+ if(busy)return;
+ const cf=cfg(),top=Math.round(+$('top').value),minVol=+$('vol').value;
+ if(![cf.mult,cf.avgN,cf.body,cf.wait,cf.maxRisk,cf.fresh,top,minVol].every(Number.isFinite)||cf.mult<1||cf.avgN<5||cf.body<=0||cf.wait<3||cf.maxRisk<=0||cf.fresh<1||top<1){$('st').textContent='مقادیر تنظیمات معتبر نیستند';return}
+ if(Date.now()<blocked){$('st').textContent='محدودیت درخواست فعال است؛ بعدا امتحان کنید';return}
+ busy=true;const t0=performance.now(),tf=$('tf').value,step={'1m':60000,'5m':300000,'15m':900000}[tf];
+ const ids=['tf','mode','top','vol','mult','avgN','body','wait','legs','emode','maxRisk','fresh','go'];
+ ids.forEach(i=>$(i).disabled=true);$('st').textContent='دریافت فهرست بازار…';
+ try{
+  if(!infoCache||Date.now()-infoCache.at>1800000)infoCache={at:Date.now(),d:await api('/api/v3/exchangeInfo')};
+  const [all,clock]=await Promise.all([api('/api/v3/ticker/24hr'),api('/api/v3/time')]);
+  const cutoff=Math.floor(clock.serverTime/step)*step;
+  const act=new Set(infoCache.d.symbols.filter(s=>s.status==='TRADING'&&s.quoteAsset==='USDT'&&s.isSpotTradingAllowed!==false).map(s=>s.symbol));
+  const syms=all.filter(s=>act.has(s.symbol)&&+s.quoteVolume>=minVol).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,top).map(s=>s.symbol);
+  let next=0,done=0,err=0;const hits=[];
+  async function worker(){
+   while(next<syms.length&&Date.now()>=blocked){
+    const s=syms[next++];
+    try{
+     const k=(await api('/api/v3/klines?symbol='+s+'&interval='+tf+'&limit=100&endTime='+(cutoff-1))).filter(x=>+x[6]<cutoff);
+     if(k.length>=cf.avgN+10&&+k[k.length-1][0]===cutoff-step){
+      const r=sp2l(k,cf);if(r){r.s=s;hits.push(r)}
+     }
+    }catch(e){err++}
+    finally{done++;$('st').textContent='بررسی '+done+' از '+syms.length+' | یافت‌شده: '+hits.length+' | خطا: '+err}
+    await new Promise(r=>setTimeout(r,60));
+   }
+  }
+  await Promise.all(Array.from({length:6},worker));
+  render(hits);
+  alarm(hits);
+  $('st').textContent=hits.length+' ستاپ | '+done+' از '+syms.length+' نماد | خطا: '+err+(err||done<syms.length?' — اسکن ناقص':'')+' | زمان: '+((performance.now()-t0)/1000).toFixed(1)+' ثانیه | پایان کندل: '+new Date(cutoff).toLocaleTimeString('fa-IR');
+ }catch(e){$('st').textContent='خطا: '+e.message}
+ finally{busy=false;left=30;ids.forEach(i=>$(i).disabled=false)}
+}
+
+function render(h){
+ allHits=h;
+ const show=$('watch').checked?h:h.filter(r=>r.status==='entry');
+ lastRows=show.sort((a,b)=>(a.status==='entry'?0:1)-(b.status==='entry'?0:1)||a.age-b.age);
+ if(!lastRows.length){$('rows').innerHTML='<tr><td colspan="13" style="color:var(--mut)">ستاپ SP2L فعالی پیدا نشد. اندازه اسپایک، تازگی سیگنال یا حداقل لگ را بازبینی کنید.</td></tr>';return}
+ $('rows').innerHTML=lastRows.map(r=>{
+  const b=r.s.replace('USDT',''),cl=r.d>0?'up':'dn',ent=r.status==='entry';
+  return `<tr${ent?` style="background:color-mix(in srgb,var(--${cl}) 14%,transparent)"`:''}>
+  <td><b>${b}</b>/USDT</td><td class="${cl}">${r.d>0?'خرید ▲':'فروش ▼'}</td>
+  <td>${ent?'<span class="tag '+cl+'">ورود فعال</span>':'<span class="tag" style="color:var(--ac)">در انتظار ورود</span>'}</td>
+  <td class="n">${fmt(r.entry)}</td><td class="n dn">${fmt(r.A)}</td><td class="n up">${fmt(r.tp1)}</td><td class="n up">${fmt(r.tp2)}</td>
+  <td class="n">${r.risk.toFixed(2)}٪</td><td class="n">${fmt(r.price)}</td>
+  <td class="n">${r.mult.toFixed(1)}× / ${r.bodyP.toFixed(0)}٪</td><td class="n">${r.legs}</td><td>${r.age} کندل پیش</td>
+  <td><a href="https://www.binance.com/en/trade/${b}_USDT" target="_blank" rel="noopener">بایننس</a></td></tr>`;
+ }).join('');
+}
+
+// هشدار
+let scans=0;
+const seen=new Set();
+try{JSON.parse(localStorage.getItem('sp2lSeen')||'[]').forEach(x=>seen.add(x))}catch(e){}
+function saveSeen(){try{localStorage.setItem('sp2lSeen',JSON.stringify([...seen].slice(-500)))}catch(e){}}
+function unlock(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(e){}}
+function beep(){
+ unlock();if(!actx)return false;
+ [880,1175,1568,1175,1568].forEach((f,i)=>{
+  const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+i*.2;
+  o.type='sine';o.frequency.value=f;o.connect(g);g.connect(actx.destination);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.4,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.18);o.start(t);o.stop(t+.19);
+ });
+ return actx.state==='running';
+}
+function askNotif(){try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}}
+const T0=document.title;
+function alarm(h){
+ const fresh=h.filter(r=>(r.status==='entry'||$('alWatch').checked)&&!seen.has(r.s+'|'+r.d+'|'+r.status+'|'+r.trigT));
+ h.forEach(r=>seen.add(r.s+'|'+r.d+'|'+r.status+'|'+r.trigT));saveSeen();
+ const first=scans++===0;
+ if(!fresh.length||first)return;
+ const names=fresh.map(r=>r.s.replace('USDT','')+(r.d>0?'▲':'▼')+(r.status==='entry'?'':'(انتظار)')).join('، ');
+ document.title='🔔 ('+fresh.length+') '+T0;$('st').textContent+=' — سیگنال جدید: '+names;
+ if(!$('snd').checked)return;
+ if(!beep())$('st').textContent+=' (برای فعال‌شدن صدا یک‌بار روی صفحه کلیک کنید)';
+ try{if('Notification' in window&&Notification.permission==='granted')new Notification('سیگنال SP2L',{body:names})}catch(e){}
+}
+window.addEventListener('focus',()=>{document.title=T0});
+document.addEventListener('click',unlock);
+$('snd').addEventListener('change',e=>{if(e.target.checked){unlock();askNotif()}});
+$('tst').onclick=()=>{askNotif();beep()};
+$('go').onclick=scan;
+$('watch').addEventListener('change',()=>render(allHits));
+['tf','mode','top','vol','mult','avgN','body','wait','legs','emode','maxRisk','fresh'].forEach(i=>$(i).addEventListener('change',()=>{scans=0;scan()}));
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'ادامه خودکار':'توقف خودکار'};
+setInterval(()=>{if(paused||busy)return;if(--left<=0)scan()},1000);
+scan();
+</script>
+</body>
+</html>
