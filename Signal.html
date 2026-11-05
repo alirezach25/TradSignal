@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اسکنر سیگنال بایننس</title>
+<style>
+:root{--bg:#0f1720;--panel:#16212d;--line:#243344;--tx:#e6edf3;--mut:#8a9bb0;--up:#22c55e;--dn:#ef4444;--ac:#e0b341}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6f8;--panel:#fff;--line:#d9e0e7;--tx:#16212d;--mut:#5b6b7d;--up:#15803d;--dn:#b91c1c;--ac:#a16207}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.7 Vazirmatn,Tahoma,sans-serif;padding:16px}
+.wrap{max-width:1180px;margin:auto}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--mut);margin:0 0 14px;font-size:13px}
+.ctl{display:flex;flex-wrap:wrap;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;align-items:end}
+.ctl label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
+select,input,button{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+input{width:110px}
+button{cursor:pointer;background:var(--ac);color:#111;border:0;font-weight:700}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.st{margin:10px 2px;color:var(--mut);font-size:13px;min-height:22px}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mut);font-weight:600}
+td.n{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.bar{display:inline-block;width:90px;height:8px;background:var(--line);border-radius:4px;vertical-align:middle;margin-inline-start:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac)}
+.tag{padding:2px 9px;border-radius:12px;font-size:12px;border:1px solid currentColor}
+.mini{padding:3px 12px;font-size:12px;background:transparent;color:var(--ac);border:1px solid var(--ac)}
+dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:0;width:min(520px,94vw);max-height:90vh}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.ch h2{margin:0;font-size:20px}
+.cb{padding:6px 18px 16px}
+.cb h3{font-size:13px;color:var(--mut);margin:14px 0 4px;font-weight:600}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.kv span:first-child{color:var(--mut)}
+.kv .bar{width:70px}
+.cf{display:flex;gap:8px;padding:0 18px 16px}
+.cf a{color:var(--ac);font-size:13px}
+.note{margin-top:14px;font-size:12px;color:var(--mut);border-top:1px solid var(--line);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>اسکنر سیگنال بایننس</h1>
+<p class="sub">بازار اسپات، جفت‌های USDT — داده‌های عمومی بایننس، بدون نیاز به API Key</p>
+
+<div class="ctl">
+ <label>بازه
+  <select id="tf">
+   <option value="1h">۱ ساعت</option><option value="2h">۲ ساعت</option><option value="3h">۳ ساعت</option>
+   <option value="4h" selected>۴ ساعت</option><option value="1d">۱ روز</option>
+  </select></label>
+ <label>حالت
+  <select id="mode"><option value="both">هر دو</option><option value="up">فقط رشد</option><option value="down">فقط ریزش</option></select></label>
+ <label>حداقل تغییر (٪)<input id="th" type="number" min="0" step="0.5" value="5"></label>
+ <label>حداقل حجم ۲۴ساعته (USDT)<input id="vol" type="number" min="0" step="10000" value="0"></label>
+ <label style="flex-direction:row;align-items:center;gap:6px"><input id="onlyrej" type="checkbox" style="width:auto">فقط برگشت‌خورده از مقاومت هفتگی</label>
+ <button id="go">اسکن الان</button>
+ <button id="pause" style="background:var(--line);color:var(--tx)">توقف خودکار</button>
+</div>
+<div class="st" id="st">آماده…</div>
+
+<div class="tw"><table>
+<thead><tr>
+ <th>ارز</th><th>تغییر</th><th>قیمت</th><th>RSI</th><th>MACD</th><th>افت قدرت حرکت</th><th>حمایت / مقاومت</th><th>امتیاز ضعف حرکت</th><th>نتیجه</th><th>مقاومت هفتگی</th><th>برخورد و برگشت</th><th>قدرت مقاومت</th><th></th>
+</tr></thead>
+<tbody id="rows"><tr><td colspan="13" style="color:var(--mut)">در حال بارگیری…</td></tr></tbody>
+</table></div>
+
+<div class="note">
+امتیاز ضعف حرکت عددی از ۰ تا ۱۰۰ است و <b>احتمال برگشت قیمت نیست</b>؛ مثلاً ۸۰ یعنی چند نشانه فنی هم‌زمان ضعف حرکت را نشان می‌دهند، نه برگشت ۸۰٪ی. برای چنین احتمالی باید بک‌تست انجام شود.
+ترکیب امتیاز: RSI (۳۰) + MACD (۲۵) + افت قدرت حرکت (۲۰) + نزدیکی به حمایت/مقاومت (۲۵)، روی کندل‌های ۱۵ دقیقه‌ای. 
+<br>مقاومت هفتگی: سقف‌های چرخشی کندل‌های هفتگی (۲ سال اخیر) که در محدودهٔ ۲٪ خوشه‌بندی می‌شوند. «برخورد و برگشت» یعنی در هفتهٔ جاری یا قبل، قیمت به آن سطح رسیده و دست‌کم ۱٫۵٪ پایین‌تر آمده. قدرت مقاومت (۰ تا ۱۰۰) از تعداد برگشت‌ها (۴۰)، عمق برگشت (۳۰) و تازگی آخرین برگشت (۳۰) ساخته می‌شود و احتمال برگشت دوباره نیست.
+<br>این ابزار توصیه مالی نیست.
+</div>
+</div>
+
+<dialog id="dlg"><div class="ch"><h2 id="dt"></h2><button class="mini" onclick="$('dlg').close()">بستن</button></div><div class="cb" id="db"></div><div class="cf" id="df"></div></dialog>
+<script>
+const BASES=['https://api.binance.com','https://data-api.binance.vision'];
+const $=id=>document.getElementById(id);
+let timer=null,left=60,paused=false,busy=false;
+
+async function api(path){
+  let err;
+  for(const b of BASES){
+    try{const r=await fetch(b+path);if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}
+    catch(e){err=e;}
+  }
+  throw err;
+}
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>i?(e=v*k+e*(1-k)):e);};
+function rsi(c,p=14){
+  let g=0,l=0;
+  for(let i=1;i<=p;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d;}
+  g/=p;l/=p;
+  for(let i=p+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(p-1)+Math.max(d,0))/p;l=(l*(p-1)+Math.max(-d,0))/p;}
+  return l===0?100:100-100/(1+g/l);
+}
+function macd(c){
+  const e12=ema(c,12),e26=ema(c,26),m=e12.map((v,i)=>v-e26[i]),s=ema(m,9);
+  return m.map((v,i)=>v-s[i]);
+}
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+
+function analyze(k,d){
+  const c=k.map(x=>+x[4]),h=k.map(x=>+x[2]),l=k.map(x=>+x[3]),n=c.length-1,price=c[n];
+  const r=rsi(c),hist=macd(c),h1=hist[n],h0=hist[n-1];
+  const rsiPts=(d>0?clamp((r-50)/30):clamp((50-r)/30))*30;
+  let macdPts=0,macdTxt;
+  if(d*h1<0){macdPts=25;macdTxt='کراس خلاف جهت';}
+  else if(d*h1<d*h0){macdPts=25*clamp(1-(d*h1)/(d*h0||1e-12));macdTxt='در حال ضعیف شدن';}
+  else macdTxt='هم‌جهت و قوی';
+  const m1=d*(c[n]-c[n-3])/c[n-3],m0=d*(c[n-3]-c[n-6])/c[n-6];
+  const momPts=m1<m0?clamp((m0-m1)/Math.max(Math.abs(m0),1e-9))*20:0;
+  const hi=Math.max(...h.slice(-96)),lo=Math.min(...l.slice(-96));
+  const dist=d>0?(hi-price)/price:(price-lo)/price;
+  const srPts=clamp(1-dist/0.03)*25;
+  const score=Math.round(rsiPts+macdPts+momPts+srPts);
+  return{score,parts:{rsi:Math.round(rsiPts),macd:Math.round(macdPts),mom:Math.round(momPts),sr:Math.round(srPts)},rsi:r,macdTxt,mom:Math.round(momPts/20*100),dist:dist*100,
+    srTxt:(d>0?'تا مقاومت ':'تا حمایت ')+(dist*100).toFixed(1)+'٪'};
+}
+function weekly(k,price){
+  const h=k.map(x=>+x[2]),c=k.map(x=>+x[4]),n=k.length,tol=0.02;
+  let sw=[];
+  for(let i=2;i<n-2;i++)if(h[i]>h[i-1]&&h[i]>h[i-2]&&h[i]>=h[i+1]&&h[i]>=h[i+2])sw.push(h[i]);
+  sw.sort((a,b)=>a-b);
+  const cl=[];
+  for(const v of sw){const g=cl[cl.length-1];if(g&&v<=g[g.length-1]*(1+tol))g.push(v);else cl.push([v]);}
+  const levels=cl.map(g=>g.reduce((a,b)=>a+b)/g.length);
+  const res=levels.map(L=>{
+    let touches=0,rej=0,pull=0,last=-1;
+    for(let i=0;i<n;i++){
+      const cc=i===n-1?price:c[i];
+      if(h[i]>=L*(1-tol)&&h[i]<=L*(1+tol)){
+        touches++;
+        const pb=(h[i]-cc)/h[i];
+        if(pb>=0.015){rej++;pull+=pb;last=i;}
+      }
+    }
+    const avg=rej?pull/rej:0;
+    const strength=rej?Math.round(Math.min(rej,5)/5*40+Math.min(avg,0.06)/0.06*30+clamp(1-(n-1-last)/26)*30):0;
+    return{L,touches,rej,last,strength,dist:(L-price)/price*100,
+      recent:last>=n-2&&price<L*(1-0.005)};
+  });
+  const rejected=res.filter(r=>r.recent).sort((a,b)=>b.strength-a.strength)[0];
+  if(rejected)return{...rejected,status:'rej'};
+  const above=res.filter(r=>r.L*(1+tol)>=price&&r.dist<=15).sort((a,b)=>a.dist-b.dist)[0];
+  if(above)return{...above,status:above.dist<=3?'near':'far'};
+  return{status:'none'};
+}
+function verdict(d,s){
+  if(d>0)return s>=65?['احتمال ضعف رشد — احتیاط / فروش','dn']:s<=35?['رشد هنوز قوی — نگهداری','up']:['خنثی — منتظر تأیید','mut'];
+  return s>=65?['ریزش رو به ضعف — مراقب خرید','up']:s<=35?['ریزش هنوز قوی — ورود نکن','dn']:['خنثی — منتظر تأیید','mut'];
+}
+const fmt=p=>p>=100?p.toFixed(2):p>=1?p.toFixed(4):p.toPrecision(4);
+
+async function scan(){
+  if(busy)return;busy=true;
+  const tf=$('tf').value,mode=$('mode').value,th=+$('th').value||0,minVol=+$('vol').value||0;
+  $('st').textContent='در حال دریافت داده از بایننس…';
+  try{
+    const all=await api('/api/v3/ticker/24hr');
+    const syms=all.filter(t=>t.symbol.endsWith('USDT')&&!/(UP|DOWN|BULL|BEAR)USDT$/.test(t.symbol)&&+t.quoteVolume>=minVol)
+      .sort((a,b)=>b.quoteVolume-a.quoteVolume).map(t=>t.symbol);
+    let list=[];
+    for(let i=0;i<syms.length;i+=100){
+      const chunk=syms.slice(i,i+100);
+      const res=await api('/api/v3/ticker?type=MINI&windowSize='+tf+'&symbols='+encodeURIComponent(JSON.stringify(chunk)));
+      list=list.concat(res);
+    }
+    let hit=list.map(t=>({s:t.symbol,pct:(+t.lastPrice-+t.openPrice)/+t.openPrice*100,p:+t.lastPrice}))
+      .filter(t=>isFinite(t.pct))
+      .filter(t=>mode==='up'?t.pct>=th:mode==='down'?t.pct<=-th:Math.abs(t.pct)>=th)
+      .sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct)).slice(0,$('onlyrej').checked?60:25);
+    $('st').textContent='در حال محاسبه اندیکاتورها برای '+hit.length+' ارز…';
+    await Promise.all(hit.map(async t=>{
+      try{
+        const k=await api('/api/v3/klines?symbol='+t.s+'&interval=15m&limit=120');
+        t.a=analyze(k,t.pct>0?1:-1);
+      }catch(e){t.a=null;}
+      try{const w=await api('/api/v3/klines?symbol='+t.s+'&interval=1w&limit=104');t.w=weekly(w,t.p);}catch(e){t.w=null;}
+    }));
+    if($('onlyrej').checked)hit=hit.filter(t=>t.w&&t.w.status==='rej');
+    render(hit);
+    $('st').textContent=hit.length+' ارز از '+syms.length+' جفت بررسی‌شده — آخرین به‌روزرسانی: '+new Date().toLocaleTimeString('fa-IR');
+  }catch(e){
+    $('st').textContent='خطا در اتصال به بایننس: '+e.message+' — فایل را مستقیم در مرورگر باز کنید و VPN/فیلتر را بررسی کنید.';
+  }
+  busy=false;left=60;
+}
+let cur=[];
+function render(rows){
+  cur=rows;
+  if(!rows.length){$('rows').innerHTML='<tr><td colspan="13" style="color:var(--mut)">با این تنظیمات ارزی پیدا نشد. درصد را کمتر یا بازه را بلندتر کنید.</td></tr>';return;}
+  $('rows').innerHTML=rows.map((t,i)=>{
+    const d=t.pct>0?'up':'dn',a=t.a;
+    const base=t.s.replace('USDT','');
+    if(!a)return `<tr><td><b>${base}</b>/USDT</td><td class="n ${d}">${t.pct.toFixed(2)}٪</td><td class="n">${fmt(t.p)}</td><td colspan="9" style="color:var(--mut)">اندیکاتور در دسترس نیست</td><td><button class="mini" onclick="openCard(${i})">جزئیات</button></td></tr>`;
+    const v=verdict(t.pct>0?1:-1,a.score);
+    const w=t.w||{status:'none'};
+    const wl=w.status==='none'?'—':fmt(w.L)+' ('+(w.dist>=0?'+':'')+w.dist.toFixed(1)+'٪)';
+    const wt=w.status==='rej'?'<span class="tag dn">⚠ برخورد و برگشت ('+w.rej+' بار)</span>':w.status==='near'?'<span class="tag" style="color:var(--ac)">نزدیک مقاومت</span>':'<span style="color:var(--mut)">—</span>';
+    const ws=w.status==='none'||!w.strength?'<span style="color:var(--mut)">—</span>':w.strength+'٪<span class="bar"><i style="width:'+w.strength+'%"></i></span>';
+    return `<tr${w.status==='rej'?' style="background:color-mix(in srgb,var(--dn) 10%,transparent)"':''}><td><b>${base}</b>/USDT</td>
+    <td class="n ${d}">${t.pct>0?'+':''}${t.pct.toFixed(2)}٪</td>
+    <td class="n">${fmt(t.p)}</td>
+    <td class="n">${a.rsi.toFixed(0)}</td>
+    <td>${a.macdTxt}</td>
+    <td class="n">${a.mom}٪</td>
+    <td>${a.srTxt}</td>
+    <td class="n">${a.score}/100<span class="bar"><i style="width:${a.score}%"></i></span></td>
+    <td><span class="tag ${v[1]==='mut'?'':v[1]}" ${v[1]==='mut'?'style="color:var(--mut)"':''}>${v[0]}</span></td>
+    <td class="n">${wl}</td><td>${wt}</td><td class="n">${ws}</td><td><button class="mini" onclick="openCard(${i})">جزئیات</button></td></tr>`;
+  }).join('');
+}
+function kv(k,v){return `<div class="kv"><span>${k}</span><span>${v}</span></div>`;}
+function openCard(i){
+  const t=cur[i],a=t.a,w=t.w||{status:'none'},base=t.s.replace('USDT',''),d=t.pct>0?1:-1;
+  $('dt').innerHTML=`${base}/USDT <span class="${d>0?'up':'dn'}" dir="ltr">${d>0?'+':''}${t.pct.toFixed(2)}٪</span>`;
+  let h=`<h3>قیمت</h3>`+kv('قیمت فعلی','<span dir="ltr">'+fmt(t.p)+'</span>')+kv('تغییر در بازه ('+$('tf').selectedOptions[0].text+')','<span dir="ltr" class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+t.pct.toFixed(2)+'٪</span>');
+  if(a){
+    const v=verdict(d,a.score);
+    h+=`<h3>اندیکاتورها (کندل ۱۵ دقیقه)</h3>`+kv('RSI',a.rsi.toFixed(1))+kv('MACD',a.macdTxt)+kv('افت قدرت حرکت',a.mom+'٪')+kv(d>0?'فاصله تا مقاومت ۲۴ساعته':'فاصله تا حمایت ۲۴ساعته',a.dist.toFixed(1)+'٪');
+    h+=`<h3>امتیاز ضعف حرکت: ${a.score} از ۱۰۰</h3>`+kv('RSI',a.parts.rsi+' از ۳۰')+kv('MACD',a.parts.macd+' از ۲۵')+kv('افت قدرت حرکت',a.parts.mom+' از ۲۰')+kv('حمایت/مقاومت',a.parts.sr+' از ۲۵')+kv('نتیجه',`<span class="${v[1]==='mut'?'':v[1]}">${v[0]}</span>`);
+  }
+  h+=`<h3>مقاومت هفتگی</h3>`;
+  if(w.status==='none')h+=kv('وضعیت','مقاومت هفتگی مرتبطی پیدا نشد');
+  else h+=kv('سطح مقاومت','<span dir="ltr">'+fmt(w.L)+' ('+(w.dist>=0?'+':'')+w.dist.toFixed(1)+'٪)</span>')
+    +kv('وضعیت',w.status==='rej'?'<span class="dn">برخورد و برگشت</span>':w.status==='near'?'نزدیک مقاومت':'دور از مقاومت')
+    +kv('تعداد برخورد / برگشت',w.touches+' / '+w.rej)
+    +kv('قدرت مقاومت',w.strength?w.strength+'٪<span class="bar"><i style="width:'+w.strength+'%"></i></span>':'—');
+  $('db').innerHTML=h;
+  $('df').innerHTML=`<a href="https://www.binance.com/en/trade/${base}_USDT" target="_blank" rel="noopener">باز کردن در بایننس</a>`;
+  $('dlg').showModal();
+}
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))$('dlg').close();});
+$('go').onclick=scan;
+['tf','mode','th','vol'].forEach(id=>$(id).addEventListener('change',scan));
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'ادامه خودکار':'توقف خودکار';};
+setInterval(()=>{if(paused||busy)return;if(--left<=0)scan();},1000);
+scan();
+</script>
+</body>
+</html>
