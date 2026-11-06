@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اسکنر روند و نقدینگی بایننس</title>
+<style>
+:root{--bg:#10151f;--cd:#182030;--tx:#e8ecf3;--mu:#8e99ad;--g:#2bc48a;--r:#f0556a;--a:#e9b84a;--bd:#2a364d}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5f9;--cd:#fff;--tx:#172033;--mu:#66728a;--bd:#d9e0ec}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.6 Vazirmatn,Tahoma,"Segoe UI",sans-serif;padding:12px}
+h1{font-size:20px;margin:0}header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:inherit;border:0;border-radius:8px;padding:8px 22px;cursor:pointer;font-weight:700;color:#08130f}
+#go{background:var(--g)}#stop{background:var(--r);color:#fff}button:disabled{opacity:.35;cursor:default}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}#st{color:var(--mu);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;margin-bottom:12px}
+fieldset{border:1px solid var(--bd);background:var(--cd);border-radius:10px;margin:0;padding:10px 12px}
+legend{padding:0 6px;color:var(--a);font-weight:700}
+label{display:inline-flex;align-items:center;gap:4px;margin:2px 8px 2px 0}
+.f{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0}
+input[type=number],select{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;font:inherit;width:90px}select{width:120px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;align-items:start}
+@media(max-width:460px){.cards{grid-template-columns:1fr}}
+.coin{background:var(--cd);border:1px solid var(--bd);border-top:4px solid var(--bd);border-radius:12px;padding:14px 16px}
+.coin.g{border-top-color:var(--g)}.coin.r{border-top-color:var(--r)}
+.ch{display:flex;align-items:center;gap:12px;padding-bottom:8px}.sy{font-size:18px}.pr{color:var(--mu);direction:ltr}.sp{flex:1}
+.bk{border-top:1px solid var(--bd);padding:10px 0 4px}.bt{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-weight:700}
+.cf{background:var(--a);color:#08130f;font-weight:700;border-radius:6px;padding:1px 10px;font-size:12.5px}
+.tk{display:block;height:6px;border-radius:3px;background:var(--bd);overflow:hidden;margin:4px 0 8px}.tk u{display:block;height:100%;text-decoration:none}
+.tk u.g{background:var(--g)}.tk u.r{background:var(--r)}.tk u.a{background:var(--a)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stats div{background:var(--bg);border-radius:8px;padding:5px 4px;text-align:center}
+.stats small{display:block;color:var(--mu);font-size:11px}.stats b{direction:ltr;display:block}
+.ln{margin:3px 0;font-size:13px}ul{margin:4px 0 0;padding:0 18px;color:var(--mu);font-size:12.5px}
+.up{color:var(--g)}.dn{color:var(--r)}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;background:var(--cd);grid-column:1/-1}
+table{border-collapse:collapse;width:100%}th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--bd)}th{color:var(--mu);font-size:12px}
+tr.m{cursor:pointer}tr.m:hover{background:rgba(127,140,170,.1)}
+dialog{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:14px;padding:0;width:min(580px,94vw);max-height:90vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.55)}
+h2{font-size:17px;margin:18px 0 10px}small.n{color:var(--mu);display:block;margin-top:10px}
+</style></head><body>
+<header><h1>اسکنر روند پیوسته و نقدینگی بایننس</h1>
+<div class="bar"><label>نمایش<select id="vm"><option value="cards">کارتی</option><option value="rows">ساده (ردیفی)</option></select></label><button id="go">استارت</button><button id="stop" disabled>استپ</button><span id="st">آماده</span></div></header>
+
+<div class="grid">
+<fieldset><legend>اسکن بازار</legend>
+<div class="f">تایم کندل<select id="tf"></select></div>
+<div class="f">حداقل حجم ۲۴ساعته (میلیون $)<input type="number" id="mvol" value="0" step=".5" min="0"></div>
+<div class="f">حداکثر تعداد ارز (۰ = همه)<input type="number" id="mcap" value="0" min="0"></div>
+<div class="f">تکرار اسکن (ثانیه)<input type="number" id="ref" value="60" min="20"></div>
+<div class="f">حداقل امتیاز نمایش<input type="number" id="msc" value="60" min="0" max="100"></div>
+<label><input type="checkbox" id="snd" checked> الارم صوتی برای ارز جدید</label></fieldset>
+
+<fieldset><legend><label><input type="checkbox" id="on1" checked> ۱) روند پیوسته</label></legend>
+<div class="f">بازه بررسی<select id="h1"></select></div>
+<div class="f">جهت<select id="dir"><option value="up">فقط صعودی</option><option value="down">فقط نزولی</option><option value="both">هر دو</option></select></div>
+<div class="f">حداقل سرعت (٪ در ساعت)<input type="number" id="msp" value=".5" step=".1"></div>
+<div class="f">حداقل پیوستگی (٪ کندل هم‌جهت)<input type="number" id="mco" value="70"></div>
+<div class="f">حداکثر برگشت داخلی (٪ از حرکت)<input type="number" id="mpb" value="40"></div></fieldset>
+
+<fieldset><legend><label><input type="checkbox" id="on2" checked> ۲) نقدینگی + ضعف + اینگالف/پین‌بار</label></legend>
+<div class="f">بازه رشد/ریزش قبلی<select id="h2"></select></div>
+<div class="f">حداقل رشد/ریزش در بازه (٪)<input type="number" id="mrn" value="3" step=".5"></div>
+<div class="f">فاصله تا ناحیه (٪)<input type="number" id="prx" value=".5" step=".1"></div>
+<div class="f">حداقل ضعف روند (۰ تا ۱۰۰)<input type="number" id="mwk" value="45"></div>
+<div><label><input type="checkbox" data-g="lt" value="d" checked> روزانه</label><label><input type="checkbox" data-g="lt" value="w" checked> هفتگی</label><label><input type="checkbox" data-g="lt" value="m" checked> ماهانه</label></div>
+<div><label><input type="checkbox" data-g="pt" value="eng" checked> اینگالف</label><label><input type="checkbox" data-g="pt" value="pin" checked> پین‌بار</label><label><input type="checkbox" id="need"> الگوی کندلی الزامی</label></div></fieldset>
+
+<fieldset><legend>تنظیم امتیازدهی (وزن‌ها)</legend>
+<b style="color:var(--mu)">روند پیوسته</b>
+<div class="f">پیوستگی<input type="number" id="a1" value="30"></div><div class="f">سرعت<input type="number" id="a2" value="25"></div>
+<div class="f">نرمی حرکت (برگشت کم)<input type="number" id="a3" value="20"></div><div class="f">خطی بودن روند<input type="number" id="a4" value="25"></div>
+<b style="color:var(--mu)">نقدینگی و ضعف</b>
+<div class="f">اندازه حرکت قبلی<input type="number" id="b1" value="20"></div><div class="f">نزدیکی و قدرت ناحیه<input type="number" id="b2" value="35"></div>
+<div class="f">ضعف روند<input type="number" id="b3" value="30"></div><div class="f">الگوی کندلی<input type="number" id="b4" value="15"></div>
+<b style="color:var(--mu)">وزن تایم ناحیه</b>
+<div class="f">روزانه / هفتگی / ماهانه<span><input type="number" id="wd" value="1" style="width:52px"> <input type="number" id="ww" value="2" style="width:52px"> <input type="number" id="wm" value="3" style="width:52px"></span></div></fieldset>
+</div>
+
+<h2 id="rh" hidden></h2><div id="rows" class="cards"></div>
+<small class="n">فقط ارزهایی که امتیازشان به حداقل برسد نمایش داده می‌شوند. این ابزار تحلیل آماری است، تضمین سود نیست و توصیه مالی محسوب نمی‌شود. فایل را روی سیستم خودتان باز کنید.</small>
+<dialog id="dlg"><div style="padding:12px"><div style="text-align:left;margin-bottom:8px"><button id="dx" style="padding:4px 14px;background:var(--bd);color:var(--tx)">✕ بستن</button></div><div id="dbody"></div></div></dialog>
+
+<script>
+const $=s=>document.querySelector(s),N=id=>+$(id).value,clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mean=(a,f)=>a.length?a.reduce((t,x)=>t+f(x),0)/a.length:0,
+fmt=v=>v>=100?v.toFixed(2):v>=1?v.toFixed(3):v.toPrecision(3),tn=m=>m>=60?m/60+' ساعت':m+' دقیقه';
+const WIN=[1,2,4,6,8,10,12,18,24],TF=[1,2,5,15,20,30,45,50,60,120,240],NAT={1:'1m',5:'5m',15:'15m',30:'30m',60:'1h',120:'2h',240:'4h'},CUS={2:[1,'1m'],20:[5,'5m'],45:[5,'5m'],50:[5,'5m']};
+const wo=d=>WIN.map(w=>`<option value="${w}" ${w==d?'selected':''}>${w} ساعت</option>`).join('');
+$('#h1').innerHTML=wo(1);$('#h2').innerHTML=wo(6);$('#tf').innerHTML=TF.map(t=>`<option value="${t}" ${t==5?'selected':''}>${tn(t)}</option>`).join('');
+const sel=g=>[...document.querySelectorAll(`[data-g=${g}]:checked`)].map(x=>x.value);
+
+async function kl(sym,iv,lim){let o=[],end='';while(lim>0){const l=Math.min(1000,lim);let r;for(let t=0;t<4;t++){r=await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}USDT&interval=${iv}&limit=${l}${end}`);if(r.status!=429&&r.status!=418)break;$('#st').textContent='محدودیت نرخ بایننس؛ چند ثانیه صبر می‌کنم...';await new Promise(z=>setTimeout(z,(+r.headers.get('retry-after')||8)*1000))}
+ if(!r.ok)throw Error('خطای بایننس '+r.status);const a=(await r.json()).map(k=>({t:k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));o=a.concat(o);lim-=l;if(a.length<l)break;end='&endTime='+(a[0].t-1)}return o}
+async function candles(sym,tf,n){if(NAT[tf])return kl(sym,NAT[tf],n);const[b,iv]=CUS[tf],raw=await kl(sym,iv,Math.min(3000,Math.ceil(n*tf/b))),ms=tf*6e4,o=[];
+ for(const k of raw){const t=Math.floor(k.t/ms)*ms,l=o[o.length-1];if(l&&l.t==t){l.h=Math.max(l.h,k.h);l.l=Math.min(l.l,k.l);l.c=k.c;l.v+=k.v}else o.push({...k,t})}return o}
+const HC={};async function htf(s,iv,n,ttl){const k=s+iv;if(HC[k]&&Date.now()-HC[k].t<ttl)return HC[k].d;const d=await kl(s,iv,n);HC[k]={t:Date.now(),d};return d}
+function piv(c,k=2){const H=[],L=[];for(let i=k;i<c.length-k;i++){const w=c.slice(i-k,i+k+1);if(c[i].h==Math.max(...w.map(x=>x.h)))H.push(c[i]);if(c[i].l==Math.min(...w.map(x=>x.l)))L.push(c[i])}return{H,L}}
+
+function readP(){const w=ids=>ids.map(i=>N(i)),pn=sel('pt');return{tf:N('#tf'),on1:$('#on1').checked,on2:$('#on2').checked,h1:N('#h1'),dir:$('#dir').value,msp:N('#msp'),mco:N('#mco'),mpb:N('#mpb'),
+ h2:N('#h2'),mrn:N('#mrn'),prx:N('#prx'),mwk:N('#mwk'),lt:sel('lt'),pn,need:$('#need').checked,w1:w(['#a1','#a2','#a3','#a4']),w2:w(['#b1','#b2','#b3','#b4']),tw:{d:N('#wd'),w:N('#ww'),m:N('#wm')},min:N('#msc')}}
+const ws=(w,c)=>100*w.reduce((t,x,i)=>t+x*c[i],0)/(w.reduce((a,b)=>a+b,0)||1);
+
+function sc1(cl,P){const n=Math.max(4,Math.round(P.h1*60/P.tf)),s=cl.slice(-n);if(s.length<4)return null;
+ const ch=(s[s.length-1].c/s[0].o-1)*100,d=ch>=0?1:-1;if(P.dir=='up'&&d<0||P.dir=='down'&&d>0)return null;
+ const cont=s.filter(x=>d>0?x.c>=x.o:x.c<=x.o).length/s.length*100,sp=Math.abs(ch)/P.h1;let ex=s[0].o,pb=0;
+ for(const x of s){if(d>0){ex=Math.max(ex,x.h);pb=Math.max(pb,(ex-x.l)/ex*100)}else{ex=Math.min(ex,x.l);pb=Math.max(pb,(x.h-ex)/ex*100)}}
+ const pr=Math.min(100,pb/(Math.abs(ch)||1e-9)*100);if(sp<P.msp||cont<P.mco||pr>P.mpb)return null;
+ const y=s.map(x=>x.c),m=y.length,mx=(m-1)/2,my=y.reduce((a,b)=>a+b)/m;let a=0,b=0,e=0;y.forEach((v,i)=>{a+=(i-mx)*(v-my);b+=(i-mx)**2;e+=(v-my)**2});const r2=e?a*a/(b*e):0;
+ return{d,ch,cont,sp,pr,msp:P.msp,score:ws(P.w1,[clamp((cont-50)/50),clamp(sp/(3*P.msp)),1-pr/100,r2])}}
+
+function weak(s,d){const n=s.length,k=Math.max(3,Math.floor(n/5)),L=s.slice(-k),Pv=s.slice(-2*k,-k);if(Pv.length<k)return null;
+ const body=x=>(x.c-x.o)/x.o*100*d,a=mean(L,body),b=mean(Pv,body),decay=a<=0?1:b<=0?0:clamp(1-a/b),
+ w=mean(L,x=>(d>0?x.h-Math.max(x.o,x.c):Math.min(x.o,x.c)-x.l)/((x.h-x.l)||1e-12)),wk=clamp((w-.25)/.4),
+ vl=mean(L,x=>x.v),vp=mean(Pv,x=>x.v),vs=vp?clamp(1-vl/vp):0,
+ pl=d*(L[k-1].c/Pv[k-1].c-1)*100,pe=d*(Pv[k-1].c/s[0].o-1)*100/(Math.max(1,(n-k)/k)),sl=pe>0?clamp(1-pl/pe):0;
+ return{v:100*(.35*decay+.25*wk+.2*vs+.2*sl),rs:[`قدرت کندل‌ها ${a.toFixed(2)}٪ در برابر ${b.toFixed(2)}٪ قبلی`,`سایه برگشتی ${(w*100).toFixed(0)}٪ از کندل`,`حجم اخیر ${vp?(vl/vp*100).toFixed(0):'-'}٪ حجم قبلی`,`پیشروی اخیر ${pl.toFixed(2)}٪ در برابر میانگین ${pe.toFixed(2)}٪`]}}
+
+function pattern(cl,d,pn){for(let j=1;j<=2;j++){const b=cl[cl.length-j],a=cl[cl.length-j-1];if(!a)break;
+ if(pn.includes('eng')&&(d>0?a.c>a.o&&b.c<b.o&&b.o>=a.c&&b.c<=a.o:a.c<a.o&&b.c>b.o&&b.o<=a.c&&b.c>=a.o))return d>0?'اینگالف نزولی':'اینگالف صعودی';
+ const bd=Math.abs(b.c-b.o)||1e-12,u=b.h-Math.max(b.o,b.c),l=Math.min(b.o,b.c)-b.l;
+ if(pn.includes('pin')&&(d>0?u>2*bd&&l<bd:l>2*bd&&u<bd))return d>0?'پین‌بار نزولی (ستاره دنباله‌دار)':'پین‌بار صعودی (چکش)'}return null}
+
+function level(q,px,d,prox,nm){if(q.length<5)return null;const p=piv(q),arr=(d>0?p.H.map(x=>x.h):p.L.map(x=>x.l)),last=q[q.length-1],r=q.slice(-12);
+ arr.push(d>0?last.h:last.l,d>0?Math.max(...r.map(x=>x.h)):Math.min(...r.map(x=>x.l)));let best=null;
+ for(const v of arr){const dist=d>0?(v/px-1)*100:(1-v/px)*100;if(dist>prox||dist<-.3)continue;
+  const t=q.filter(x=>Math.abs((d>0?x.h:x.l)/v-1)<.0025).length,c=clamp(1-Math.max(0,dist)/prox)*(.5+.5*clamp(t/3));
+  if(!best||c>best.c)best={v,dist,t,c,nm,sweep:q.slice(-3).some(x=>d>0?x.h>v&&x.c<v:x.l<v&&x.c>v)}}return best}
+
+async function sc2(sym,cl,p,P){const n=Math.max(8,Math.round(P.h2*60/P.tf)),s=cl.slice(-n);if(s.length<8)return null;
+ const ch=(s[s.length-1].c/s[0].o-1)*100,d=ch>=0?1:-1;if(Math.abs(ch)<P.mrn)return null;
+ const w=weak(s,d);if(!w||w.v<P.mwk)return null;const pat=pattern(cl,d,P.pn);if(P.need&&!pat)return null;
+ const T={d:['1d','روزانه',90,6e5],w:['1w','هفتگی',52,36e5],m:['1M','ماهانه',24,36e5]},mw=Math.max(...P.lt.map(k=>P.tw[k]),1e-9);let lv=null;
+ for(const k of P.lt){const[iv,nm,lim,ttl]=T[k],q=(await htf(sym,iv,lim,ttl)).slice(0,-1),x=level(q,p,d,P.prx,nm);if(!x)continue;x.c=Math.min(1,x.c*(P.tw[k]/mw)*(x.sweep?1.15:1));if(!lv||x.c>lv.c)lv=x}
+ if(!lv)return null;
+ return{d,run:ch,h:P.h2,lv,sweep:lv.sweep,weak:w.v,rs:w.rs,pat,score:ws(P.w2,[clamp(Math.abs(ch)/(3*P.mrn)),lv.c,w.v/100,pat?1:0])}}
+
+async function analyze(sym,P){const H=Math.max(P.on1?P.h1:0,P.on2?P.h2:0),cs=await candles(sym,P.tf,Math.min(3000,Math.max(60,Math.ceil(H*60/P.tf)+40)));if(cs.length<30)return null;
+ const cl=cs.slice(0,-1),p=cs[cs.length-1].c,r={sym,p,s1:P.on1?sc1(cl,P):null,s2:null};if(P.on2)r.s2=await sc2(sym,cl,p,P);return r}
+
+/* نمایش */
+const vis=(r,m)=>({...r,s1:r.s1&&r.s1.score>=m?r.s1:null,s2:r.s2&&r.s2.score>=m?r.s2:null}),topS=r=>Math.max(r.s1?r.s1.score:0,r.s2?r.s2.score:0);
+const bar=(v,c)=>`<i class="tk"><u class="${c}" style="width:${Math.round(v)}%"></u></i>`;
+function blk1(a){const c=a.d>0?'up':'dn';return`<div class="bk"><div class="bt"><b class="${c}">روند ${a.d>0?'صعودی':'نزولی'} ${a.sp>=2*a.msp?'سریع و ':''}پیوسته</b><span class="cf">${a.score.toFixed(0)}</span></div>${bar(a.score,a.d>0?'g':'r')}
+<div class="stats"><div><small>تغییر</small><b class="${c}">${a.ch.toFixed(2)}٪</b></div><div><small>پیوستگی</small><b>${a.cont.toFixed(0)}٪</b></div><div><small>سرعت/ساعت</small><b>${a.sp.toFixed(2)}٪</b></div><div><small>برگشت داخلی</small><b>${a.pr.toFixed(0)}٪</b></div></div></div>`}
+function blk2(a){const u=a.d>0;return`<div class="bk"><div class="bt"><b class="${u?'dn':'up'}">${u?'رشد رسیده به نقدینگی بالا: احتمال ریزش':'ریزش رسیده به حمایت: احتمال برگشت صعودی'}</b><span class="cf">${a.score.toFixed(0)}</span></div>${bar(a.score,u?'r':'g')}
+<div class="ln">${u?'رشد':'ریزش'} ${Math.abs(a.run).toFixed(2)}٪ در ${a.h} ساعت</div>
+<div class="ln">ناحیه ${a.lv.nm}: ${fmt(a.lv.v)} (فاصله ${a.lv.dist.toFixed(2)}٪، ${a.lv.t} برخورد)${a.sweep?' ⚑ جمع‌آوری نقدینگی':''}</div>
+<div class="ln">الگوی کندلی: <b>${a.pat||'ندارد'}</b></div><div class="ln">ضعف ${u?'رشد':'ریزش'}: <b>${a.weak.toFixed(0)}٪</b></div>${bar(a.weak,'a')}<ul>${a.rs.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+function card(r){const cl=r.s1&&r.s1.score>=(r.s2?r.s2.score:0)?(r.s1.d>0?'g':'r'):r.s2?(r.s2.d>0?'r':'g'):'';
+ return`<section class="coin ${cl}"><div class="ch"><b class="sy">${r.sym}</b><span class="pr">${fmt(r.p)}</span><span class="sp"></span><span class="cf">${topS(r).toFixed(0)}</span></div>${r.s1?blk1(r.s1):''}${r.s2?blk2(r.s2):''}</section>`}
+function rowsH(L){return`<div class="tw"><table><thead><tr><th>ارز</th><th>قیمت</th><th>سیگنال</th><th>امتیاز</th></tr></thead><tbody>${L.map(r=>`<tr class="m" data-s="${r.sym}"><td><b>${r.sym}</b></td><td dir="ltr">${fmt(r.p)}</td><td>${
+ [r.s1&&`<span class="${r.s1.d>0?'up':'dn'}">روند ${r.s1.d>0?'صعودی':'نزولی'} پیوسته</span>`,r.s2&&`<span class="${r.s2.d>0?'dn':'up'}">${r.s2.d>0?'نقدینگی بالا + ضعف رشد':'حمایت + ضعف ریزش'}${r.s2.pat?' + '+r.s2.pat:''}</span>`].filter(Boolean).join('<br>')
+ }</td><td><span class="cf">${topS(r).toFixed(0)}</span></td></tr>`).join('')}</tbody></table></div>`}
+let res={},on=0,tmr,prev=new Set(),AC;
+function render(){const P=readP(),L=Object.values(res).map(r=>vis(r,P.min)).filter(r=>r.s1||r.s2).sort((a,b)=>topS(b)-topS(a));
+ $('#rh').hidden=!Object.keys(res).length;$('#rh').textContent=`ارزهای واجد شرایط (${L.length})`;$('#rows').innerHTML=!L.length?`<div style="color:var(--mu);padding:8px 2px">${Object.keys(res).length?'ارزی با امتیاز کافی پیدا نشد. حداقل امتیاز یا شرط‌ها را شل‌تر کنید.':on?'در حال اسکن...':'برای شروع، دکمه استارت را بزنید.'}</div>`:$('#vm').value=='rows'?rowsH(L):L.map(card).join('');
+ return L}
+$('#vm').onchange=render;$('#msc').onchange=render;
+document.addEventListener('click',e=>{try{AC=AC||new AudioContext();AC.resume()}catch(x){}const t=e.target.closest('tr.m');if(!t)return;const r=res[t.dataset.s];if(!r)return;$('#dbody').innerHTML=card(vis(r,readP().min));$('#dlg').showModal()});
+$('#dx').onclick=()=>$('#dlg').close();$('#dlg').onclick=e=>{if(e.target==$('#dlg'))$('#dlg').close()};
+function beep(){try{AC=AC||new AudioContext();[880,1175,880].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+i*.22;o.frequency.value=f;o.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.start(t);o.stop(t+.21)})}catch(e){}}
+
+const STB=new Set(['USDC','FDUSD','TUSD','USDP','DAI','EUR','AEUR','USD1','XUSD','BFUSD','USDE','PAXG']);
+async function scan(){if(!on)return;const t0=Date.now(),P=readP(),seen=new Set();
+ try{$('#st').textContent='دریافت لیست بازار...';const r=await fetch('https://api.binance.com/api/v3/ticker/24hr');if(!r.ok)throw Error('خطای بایننس '+r.status);
+  let L=(await r.json()).filter(x=>x.symbol.endsWith('USDT')&&+x.quoteVolume>=N('#mvol')*1e6&&+x.count>0).map(x=>({s:x.symbol.slice(0,-4),v:+x.quoteVolume})).filter(x=>!STB.has(x.s)&&/^[A-Z0-9]+$/.test(x.s)).sort((a,b)=>b.v-a.v);
+  if(N('#mcap')>0)L=L.slice(0,N('#mcap'));let d=0;
+  for(let i=0;i<L.length&&on;i+=5){await Promise.all(L.slice(i,i+5).map(async x=>{try{const a=await analyze(x.s,P);if(a){res[x.s]=a;seen.add(x.s)}}catch(e){}d++}));
+   $('#st').textContent=`اسکن: ${Math.min(d,L.length)} از ${L.length}`;render()}
+  if(on){Object.keys(res).forEach(k=>{if(!seen.has(k))delete res[k]});const L2=render(),cur=new Set();L2.forEach(r=>{if(r.s1)cur.add(r.sym+'1');if(r.s2)cur.add(r.sym+'2')});
+   const nw=[...cur].filter(k=>!prev.has(k));prev=cur;if(nw.length&&$('#snd').checked)beep();
+   const A=Object.values(res),c1=A.filter(x=>x.s1).length,c2=A.filter(x=>x.s2).length;
+   $('#st').textContent=`${A.length} ارز بررسی شد (روند: ${c1}، نقدینگی: ${c2}) | ${L2.length} ارز واجد امتیاز${nw.length?' — '+nw.length+' سیگنال جدید 🔔':''} | ${new Date().toLocaleTimeString('fa-IR')}`}}
+ catch(e){$('#st').textContent=e.message}
+ if(on)tmr=setTimeout(scan,Math.max(5000,Math.max(20,N('#ref'))*1000-(Date.now()-t0)))}
+$('#go').onclick=()=>{if(on)return;on=1;prev=new Set();$('#go').disabled=1;$('#stop').disabled=0;scan()};
+$('#stop').onclick=()=>{on=0;clearTimeout(tmr);$('#go').disabled=0;$('#stop').disabled=1;$('#st').textContent='متوقف شد'};
+render();
+</script></body></html>
