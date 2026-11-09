@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اسکنر نقدینگی</title>
+<style>
+:root{--bg:#f6f8fa;--p:#ffffff;--b:#d0d7de;--t:#1f2328;--m:#656d76;--g:#1a7f37;--r:#cf222e;--y:#9a6700;--a:#0969da;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px Tahoma,system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--p);border-bottom:1px solid var(--b);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}#st{color:var(--m);font-size:12px;flex:1}
+button,select,input{font:inherit;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button.pri{background:var(--a);color:#fff;border:0;font-weight:700}
+.panel{padding:12px 14px;border-bottom:1px solid var(--b);display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.panel label{display:flex;flex-direction:column;gap:4px;color:var(--m);font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{padding:5px 11px;border-radius:99px;border:1px solid var(--b);cursor:pointer;user-select:none}
+.chip.on{background:var(--a);color:#fff;border-color:var(--a);font-weight:700}.chip.on::before{content:'✓ '}
+.ck{display:inline-flex;gap:5px;align-items:center;cursor:pointer;padding:4px 10px;border:1px solid var(--b);border-radius:99px;background:var(--p);color:var(--t)}.ck input{padding:0;margin:0}.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.grp>b{color:var(--t);font-size:12px}
+.bar{padding:8px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--m);font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--b);cursor:pointer}
+.row:hover{background:var(--p)}.row.near{background:#fff8c5;border-inline-start:4px solid var(--y)}
+.row b{min-width:78px}.tf{background:var(--b);padding:2px 8px;border-radius:5px;font-size:12px}
+.g{color:var(--g)}.r{color:var(--r)}.m{color:var(--m)}.sc{margin-inline-start:auto;font-weight:700;color:var(--a)}
+.st0{color:var(--m)}.st1{color:var(--y)}.st2{color:#bc4c00}.st3{color:var(--r)}
+#mod{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:20;padding:12px}#mod[hidden]{display:none}
+#card{background:#fff;border-radius:12px;max-width:680px;width:100%;max-height:92vh;overflow:auto;padding:18px;box-shadow:0 10px 40px #0004}
+.bds{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.bd{padding:4px 10px;border-radius:99px;font-size:12px;background:#eaeef2;color:var(--m)}.bd.ok{background:#dafbe1;color:var(--g);font-weight:700}
+.act{padding:3px 10px;border-radius:6px;font-weight:700;color:#fff;font-size:13px;min-width:92px;text-align:center}.act.sell{background:var(--r)}.act.buy{background:var(--g)}
+.banner{border-radius:10px;padding:12px 14px;color:#fff;margin-bottom:12px}.banner b{font-size:20px;display:block}.banner.sell{background:var(--r)}.banner.buy{background:var(--g)}.banner span{font-size:13px;opacity:.95}
+.mbtn{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.det{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 18px}
+.det div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--b);padding:3px 0}.det span:first-child{color:var(--m)}
+.det .w{grid-column:1/-1;display:block;color:var(--m);line-height:1.8;border:0}
+.num{direction:ltr;unicode-bidi:embed}
+.empty{padding:40px;text-align:center;color:var(--m)}
+</style></head><body>
+<header><h1>🎯 اسکنر نقدینگی</h1><span id="st">آماده</span>
+<button id="go" class="pri">▶ شروع اسکن + فعال‌سازی صدا</button><button id="stop" style="border-color:var(--r);color:var(--r);font-weight:700" hidden>⏹ توقف</button><button id="mute">🔊</button><button id="cfg">⚙ تنظیمات</button></header>
+<div class="panel" id="panel" hidden>
+<label>تعداد ارزها (بر اساس حجم)<select id="top"><option value="20">۲۰ ارز برتر</option><option value="50">۵۰ ارز برتر</option><option value="100">۱۰۰ ارز برتر</option><option value="200">۲۰۰ ارز برتر</option><option value="0">همه ارزها (کند)</option></select></label>
+<label>حداقل حجم ۲۴ساعته (میلیون دلار)<input id="minVol" type="number" min="0" step="5"></label>
+<label>فاصله آلارم: <span id="nearV"></span> ATR<input id="near" type="range" min="0.2" max="3" step="0.1"></label>
+<label>حداکثر فاصله تا نقدینگی: <span id="nearPctV"></span>٪<input id="nearPct" type="range" min="0.3" max="10" step="0.1"></label>
+<label>حداقل امتیاز برای آلارم: <span id="minScV"></span><input id="minScore" type="range" min="0" max="90" step="5"></label>
+<label>بلندی صدا: <span id="volV"></span>٪<input id="vol" type="range" min="0" max="100" step="5"></label>
+<label>نوع صدا<select id="tone"><option value="siren">آژیر (بلند)</option><option value="beep">بوق</option><option value="bell">زنگ</option></select></label>
+<label>تعداد تکرار<select id="rep"><option>1</option><option>3</option><option>5</option><option>10</option></select></label>
+<label>بروزرسانی قیمت (ثانیه)<input id="every" type="number" min="2" max="60"></label>
+<label>&nbsp;<button id="test">🔔 تست صدا</button></label>
+</div>
+<div class="bar" style="flex-direction:column;align-items:stretch;gap:8px;background:var(--p);border-bottom:1px solid var(--b)">
+<div class="grp"><b>تایم‌فریم‌ها:</b><span class="chips" id="tfs"></span></div>
+<div class="grp"><label class="ck" style="border-color:var(--r);font-weight:700"><input type="checkbox" id="sniper"> 🎯 دقیق: فاصله ≤ <input id="snipN" type="number" min="0.5" max="5" step="0.5" style="width:56px;padding:2px 4px"> کندل ۱۵ دقیقه‌ای</label><label class="ck"><input type="checkbox" id="onlyNear"> نزدیک به نقدینگی</label>
+<label class="ck" title="واگرایی منفی روی سقف‌ها (شورت) و مثبت روی کف‌ها (لانگ)؛ RSI فقط در اشباع (بالای ۶۵ / زیر ۳۵)"><input type="checkbox" id="dRsi"> واگرایی RSI</label><label class="ck" title="MACD با تنظیمات ۱۲،۲۶،۹"><input type="checkbox" id="dMacd"> واگرایی MACD</label><label class="ck" title="واگرایی RSI فقط وقتی معتبر باشد که RSI بالای ۶۵ (سقف) یا زیر ۳۵ (کف) باشد؛ در غیر این صورت هم نشان داده می‌شود ولی ستاره (★) و امتیاز اضافه ندارد"><input type="checkbox" id="rsiZone"> RSI حتماً در اشباع</label><select id="dMode" title="وقتی هر دو واگرایی روشن‌اند"><option value="all">هر دو واگرایی لازم</option><option value="any">یکی از دو واگرایی کافی</option></select><label class="ck" title="والیوم پروفایل ۲۰۰ کندل: سطح نقدینگی باید خارج از محدوده ارزش (بالای VAH برای شورت / زیر VAL برای لانگ) یا روی گره حجمی POC/HVN باشد"><input type="checkbox" id="vp"> والیوم پروفایل</label>
+<b>قدرت نقدینگی:</b><span id="fl" class="grp"></span><b>قدرت سیگنال:</b><span id="fs" class="grp"></span>
+<select id="sort"><option value="s">مرتب‌سازی: امتیاز</option><option value="d">مرتب‌سازی: نزدیک‌ترین</option></select><span id="cnt"></span></div></div>
+<div id="list"><div class="empty">برای شروع دکمه «شروع اسکن» را بزنید.</div></div>
+<div id="mod" hidden><div id="card"><div id="mb"></div><div class="mbtn"><button id="img" class="pri">📷 ذخیره تصویر</button><button id="x">بستن</button></div></div></div>
+<script>
+const DIV={maxGap:80,minGap:4,ob:65,os:35,bonus:10,zoneBonus:5,maxTry:4};
+const TFS=['1h','2h','4h','12h','1d','3d','4d','1w'],W={'1h':5,'2h':6,'4h':8,'12h':10,'1d':12,'3d':13,'4d':14,'1w':15};
+const $=s=>document.querySelector(s);
+const S=Object.assign({tfs:['4h','1w'],top:50,minVol:20,near:1,minScore:40,vol:80,tone:'siren',rep:3,every:5,sound:true,onlyNear:true,nearPct:2,sniper:false,snipN:1,sort:'s',fl:[0,1,2],fs:[0,1,2,3],dRsi:false,dMacd:false,rsiZone:false,dMode:'all',vp:false},(()=>{try{return JSON.parse(localStorage.lq)}catch(e){return{}}})());
+const save=()=>{try{localStorage.lq=JSON.stringify(S)}catch(e){}};
+if(S.v!==3){S.onlyNear=true;S.nearPct=S.nearPct||2;S.sniper=true;S.snipN=S.snipN||1;S.v=3;save()}
+const BASE='https://fapi.binance.com/fapi/v1/';
+let stopReq=false,c15={},price={},fund={},volMap={},results=[],alerted={},scanning=false,open=null,ac,started=false;
+const f=n=>+(+n).toPrecision(6),pad=ms=>new Promise(r=>setTimeout(r,ms));
+const status=t=>$('#st').textContent=t;
+
+const requests=new Set();
+let nextAt=0,pauseUntil=0,errs=0,consec=0,banMsg='';
+async function gate(weight,signal){
+ while(!signal.aborted&&!stopReq){
+  const now=Date.now(),wait=Math.max(nextAt,pauseUntil)-now;
+  if(wait<=0){nextAt=Math.max(now-1500,nextAt)+weight*30;return true}
+  await new Promise(resolve=>{
+   const done=()=>{clearTimeout(timer);signal.removeEventListener('abort',done);resolve()};
+   const timer=setTimeout(done,wait);signal.addEventListener('abort',done,{once:true});
+  });
+ }
+ return false;
+}
+async function j(u,weight){
+ const ab=new AbortController();requests.add(ab);
+ try{
+  for(let i=0;i<3;i++){
+   if(!await gate(weight,ab.signal)||ab.signal.aborted||stopReq)return null;
+   const attempt=new AbortController(),cancel=()=>attempt.abort();
+   ab.signal.addEventListener('abort',cancel,{once:true});
+   const timeout=setTimeout(cancel,8000);
+   try{
+    const r=await fetch(BASE+u,{signal:attempt.signal});
+    if(r.status===418||r.status===429){
+     const header=r.headers.get('retry-after'),seconds=Number(header);
+     const delay=header&&Number.isFinite(seconds)?seconds*1000:Date.parse(header)-Date.now();
+     const ms=delay>0?delay:(r.status===418?300000:10000);
+     pauseUntil=Math.max(pauseUntil,Date.now()+ms);
+     if(r.status===418||ms>90000){
+      banMsg='⛔ محدودیت بایننس؛ حدود '+Math.ceil(ms/60000)+' دقیقه صبر کنید';
+      stopReq=true;requests.forEach(request=>request.abort());return null;
+     }
+     status('⚠ محدودیت نرخ بایننس؛ '+Math.ceil(ms/1000)+' ثانیه مکث');continue;
+    }
+    if(r.status===403||r.status===451){
+     banMsg='⚠ دسترسی به API بایننس مسدود است (HTTP '+r.status+')';
+     stopReq=true;requests.forEach(request=>request.abort());return null;
+    }
+    if(r.status>=400&&r.status<500){errs++;return null}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();consec=0;return data;
+   }catch(e){
+    if(ab.signal.aborted)return null;
+    errs++;
+    if(++consec>=30){
+     banMsg='⚠ اتصال به بایننس ناپایدار است؛ دوباره شروع کنید';
+     stopReq=true;requests.forEach(request=>request.abort());return null;
+    }
+    if(i<2)await pad(300*(i+1));
+   }finally{clearTimeout(timeout);ab.signal.removeEventListener('abort',cancel)}
+  }
+  return null;
+ }finally{requests.delete(ab)}
+}
+const history=new Map(),day=86400000;
+async function candles(sym,tf,limit){
+ const key=sym+'|'+tf,prev=history.get(key);
+ const step=tf==='1w'?7*day:tf==='15m'?900000:parseInt(tf)*(tf.endsWith('d')?day:3600000);
+ const last=prev?.bars.at(-1);
+ const delta=last&&prev.limit>=limit&&Date.now()-last.t<98*step;
+ const count=delta?Math.min(99,Math.max(2,Math.floor((Date.now()-last.t)/step)+2)):limit;
+ const d=await j('klines?symbol='+sym+'&interval='+tf+'&limit='+count,count<100?1:2);
+ if(!Array.isArray(d)||!d.length)return null;
+ const latest=d.map(k=>({t:+k[0],h:+k[2],l:+k[3],c:+k[4],v:+k[7],end:+k[6]}));
+ const bars=(delta?prev.bars.filter(k=>k.t<latest[0].t).concat(latest):latest).slice(-limit);
+ history.set(key,{bars,limit});return bars;
+}
+// ===== اندیکاتورها: RSI (وایلدر ۱۴) و MACD (۱۲،۲۶،۹) =====
+const rv=(g,l)=>l===0?(g===0?50:100):100-100/(1+g/l);
+function calcRSI(c,n=14){
+ const v=Array(c.length).fill(NaN),ag=v.slice(),al=v.slice();
+ if(c.length<=n)return{v,ag,al};
+ let g=0,l=0;
+ for(let i=1;i<=n;i++){const d=c[i].c-c[i-1].c;if(d>=0)g+=d;else l-=d}
+ g/=n;l/=n;v[n]=rv(g,l);ag[n]=g;al[n]=l;
+ for(let i=n+1;i<c.length;i++){const d=c[i].c-c[i-1].c;g=(g*(n-1)+Math.max(d,0))/n;l=(l*(n-1)+Math.max(-d,0))/n;v[i]=rv(g,l);ag[i]=g;al[i]=l}
+ return{v,ag,al}}
+const rsiLive=(s,px)=>{const d=px-s.pc;return rv((s.g*13+Math.max(d,0))/14,(s.l*13+Math.max(-d,0))/14)};
+function calcMACD(c,f=12,s=26,g=9){
+ const kf=2/(f+1),ks=2/(s+1),kg=2/(g+1),m=Array(c.length),h=Array(c.length);let ef=c[0].c,es=c[0].c,sg=0;
+ for(let i=0;i<c.length;i++){ef+=(c[i].c-ef)*kf;es+=(c[i].c-es)*ks;m[i]=ef-es;sg=i?sg+(m[i]-sg)*kg:m[i];h[i]=m[i]-sg}
+ return{m,h}}
+function aggregate4d(bars){
+ const groups=new Map(),step=4*day;
+ for(const bar of bars){
+  const t=Math.floor(bar.t/step)*step,g=groups.get(t);
+  if(g){g.h=Math.max(g.h,bar.h);g.l=Math.min(g.l,bar.l);g.c=bar.c;g.v+=bar.v;g.count++}
+  else groups.set(t,{...bar,t,end:t+step-1,count:1});
+ }
+ return [...groups.values()].filter(g=>g.count===4);
+}
+const atr=(c,n=14)=>{let s=0;for(let i=c.length-n;i<c.length;i++){const p=c[i-1];s+=Math.max(c[i].h-c[i].l,Math.abs(c[i].h-p.c),Math.abs(c[i].l-p.c))}return s/n};
+
+function analyze(sym,tf,c){
+ const n=c.length,A=atr(c),px=c[n-1].c,L=['1w','4d','3d'].includes(tf)?2:3;
+ if(!(A>0&&px>0))return [];
+ const ph=[],pl=[],sH=Array(n).fill(-Infinity),sL=Array(n).fill(Infinity);
+ for(let i=n-2;i>=0;i--){sH[i]=Math.max(sH[i+1],c[i+1].h);sL[i]=Math.min(sL[i+1],c[i+1].l)}
+ for(let i=L;i<n-L;i++){let H=1,Lw=1;for(let k=1;k<=L;k++){if(!(c[i].h>=c[i-k].h&&c[i].h>c[i+k].h))H=0;if(!(c[i].l<=c[i-k].l&&c[i].l<c[i+k].l))Lw=0}
+  if(H)ph.push({i,p:c[i].h});if(Lw)pl.push({i,p:c[i].l})}
+ const av=a=>a.reduce((s,x)=>s+x.v,0)/a.length,volRatio=av(c.slice(-3))/(av(c.slice(-23,-3))||1);
+ const tol=Math.min(.25*A,.005*px),out=[];
+ // ===== واگرایی RSI / MACD در سقف‌ها و کف‌ها =====
+ // ===== والیوم پروفایل (آخرین ۲۰۰ کندل): POC، محدوده ارزش ۷۰٪ (VAH/VAL)، گره‌های پرحجم (HVN) =====
+ function volProfile(){
+  const w=c.slice(-Math.min(n,200)),lo=Math.min(...w.map(x=>x.l)),hi=Math.max(...w.map(x=>x.h)),N=60,bs=(hi-lo)/N;
+  if(!(bs>0))return null;
+  const v=Array(N).fill(0);
+  for(const x of w){
+   const a=Math.min(N-1,Math.floor((x.l-lo)/bs)),b=Math.min(N-1,Math.floor((x.h-lo)/bs)),m=b-a+1;
+   for(let i=a;i<=b;i++)v[i]+=x.v/m;
+  }
+  const tot=v.reduce((q,y)=>q+y,0);if(!(tot>0))return null;
+  let poc=0;v.forEach((q,i)=>{if(q>v[poc])poc=i});
+  let l2=poc,h2=poc,acc=v[poc];
+  while(acc<.7*tot&&(l2>0||h2<N-1)){
+   const dn=l2>0?v[l2-1]:-1,upv=h2<N-1?v[h2+1]:-1;
+   if(upv>=dn){h2++;acc+=v[h2]}else{l2--;acc+=v[l2]}
+  }
+  const avg=tot/N,mid=i=>lo+(i+.5)*bs,hvn=[];
+  v.forEach((q,i)=>{if(q>=1.5*avg&&q>=(i?v[i-1]:0)&&q>=(i<N-1?v[i+1]:0))hvn.push(mid(i))});
+  return{poc:mid(poc),vah:lo+(h2+1)*bs,val:lo+l2*bs,hvn,v,lo,bs,avg,N}
+ }
+ const VP=volProfile();
+ // up=true (شورت روی سقف): سطح بالای VAH = گران‌تر از محدوده ارزش | up=false (لانگ روی کف): سطح زیر VAL
+ function vpRow(up,lvl,org,risk){
+  if(!VP)return null;
+  const tolN=Math.max(1.5*VP.bs,.25*A),inR=lvl>=VP.lo&&lvl<=VP.lo+VP.N*VP.bs,
+   bi=Math.max(0,Math.min(VP.N-1,Math.floor((lvl-VP.lo)/VP.bs))),ratio=inR?VP.v[bi]/VP.avg:0,
+   node=[VP.poc,...VP.hvn].some(p=>Math.abs(p-lvl)<=tolN),
+   prem=up?lvl>=VP.vah:lvl<=VP.val,
+   toward=up?VP.poc<lvl&&VP.poc>org:VP.poc>lvl&&VP.poc<org;
+  return{poc:VP.poc,vah:VP.vah,val:VP.val,prem,node,ratio,rrPoc:toward&&risk?Math.abs(VP.poc-lvl)/risk:null}
+ }
+ const RS=calcRSI(c),MC=calcMACD(c),rsiS=Number.isFinite(RS.ag[n-2])?{g:RS.ag[n-2],l:RS.al[n-2],pc:c[n-2].c}:null;
+ // آخرین سقف/کف در حال شکل‌گیری (هنوز تأیید نشده؛ برای لحظه‌ی رسیدن قیمت به نقدینگی)
+ function livePt(up){
+  let b=null;
+  for(let i=Math.max(L,n-L);i<n;i++){
+   let ok=true;
+   for(let k=1;k<=L;k++)if(up?c[i].h<c[i-k].h:c[i].l>c[i-k].l){ok=false;break}
+   if(!ok)continue;
+   const p=up?c[i].h:c[i].l;
+   if(!b||(up?p>=b.p:p<=b.p))b={i,p,live:true};
+  }
+  return b}
+ // up=true: واگرایی منفی روی سقف (قیمت سقف بالاتر/برابر، اسیلاتور پایین‌تر) | up=false: واگرایی مثبت روی کف
+ function diverge(up,pts,zl,zh,osc,kind){
+  let bi=-1;
+  for(let j=pts.length-1;j>=0;j--)if(pts[j].p>=zl-tol&&pts[j].p<=zh+tol){bi=j;break}
+  if(bi<0)return null;
+  const B=pts[bi],ob=osc[B.i];let fb=null;
+  if(!Number.isFinite(ob))return null;
+  for(let j=bi-1,t=0;j>=0&&t<DIV.maxTry;j--){
+   const a=pts[j],gap=B.i-a.i;
+   if(gap>DIV.maxGap)break;if(gap<DIV.minGap)continue;
+   const oa=osc[a.i];if(!Number.isFinite(oa)||(kind!=='r'&&a.i<35))continue;
+   t++;
+   if(up?B.p<a.p-tol:B.p>a.p+tol)continue;
+   const mg=kind==='r'?1:.03*Math.max(Math.abs(oa),Math.abs(ob));
+   if(!(up?ob<oa-mg:ob>oa+mg))continue;
+   const z=kind==='r'&&(up?Math.max(oa,ob)>=DIV.ob:Math.min(oa,ob)<=DIV.os);
+   const sl=kind==='r'?1:mg*.5;let bad=false;
+   for(let k=a.i+1;k<B.i;k++){
+    const ln=oa+(ob-oa)*(k-a.i)/gap;
+    if(up?osc[k]>ln+sl:osc[k]<ln-sl){bad=true;break}
+    if(up?c[k].h>Math.max(a.p,B.p)+tol:c[k].l<Math.min(a.p,B.p)-tol){bad=true;break}
+   }
+   if(bad)continue;
+   const res={a:oa,b:ob,gap,live:!!B.live,z,src:kind};
+   if(kind!=='r'||z)return res;
+   fb=fb||res;
+  }
+  return fb}
+ // هر دو جهت مستقل از هم بررسی می‌شوند: up=true → سقف‌ها (شورت) ، up=false → کف‌ها (لانگ)
+ for(const up of [true,false]){
+  const piv=up?ph:pl,lp=livePt(up),pts=lp?[...piv,lp]:piv;
+  const u=piv.filter(q=>up?sH[q.i]<=q.p&&q.p>px:sL[q.i]>=q.p&&q.p<px).sort((a,b)=>a.p-b.p),cl=[];
+  for(const q of u){const g=cl[cl.length-1];if(g&&q.p-g.min<=tol){g.pts.push(q);g.max=q.p}else cl.push({pts:[q],min:q.p,max:q.p})}
+  const build=g=>{
+   const lvl=up?g.max:g.min,d=Math.abs(lvl-px)/A,pc=Math.abs(lvl-px)/px*100;if(d>8||pc>15)return null;
+   const first=Math.min(...g.pts.map(q=>q.i));
+   // مبدأ لگ: پایین‌ترین کف (برای شورت) / بالاترین سقف (برای لانگ) از اولین لمس سطح تا الان
+   const seg=c.slice(first);
+   const orgP=up?Math.min(...seg.map(x=>x.l)):Math.max(...seg.map(x=>x.h));
+   if(up?px<=orgP:px>=orgP)return null;
+   const size=Math.abs(lvl-orgP);if(size<1.5*A)return null;
+   const oi=first+seg.findIndex(x=>up?x.l===orgP:x.h===orgP);
+   const k=Math.max(5,Math.min(n-1-oi,30));let path=0;for(let i=n-k;i<n;i++)path+=Math.abs(c[i].c-c[i-1].c);
+   const er=path?Math.abs(c[n-1].c-c[n-1-k].c)/path:0;
+   const strength=Math.round(Math.min(100,Math.min(size/A,12)*5+er*35+Math.min(volRatio,2.5)*4));
+   const pad=Math.min(.15*A,.002*px),zl=up?g.min:g.min-pad,zh=up?g.max+pad:g.max;
+   const buf=Math.max(.002*px,Math.min(.6*A,.01*px)),sl=up?zh+buf:zl-buf,tp1=(lvl+orgP)/2,tp2=orgP,risk=Math.abs(sl-lvl);
+   if(zl<=0||sl<=0||!risk||Math.abs(tp1-lvl)/risk<1)return null;
+   const sc=g.pts.length*10-d*3-pc*1.5+Math.max(...g.pts.map(q=>q.i))/n*4;
+   return{sc,lvl,row:{id:sym+'|'+tf,sym,tf,up,lvl,zl,zh,touches:g.pts.length,A,strength,er,volRatio,size,org:orgP,legATR:size/A,
+    entry:lvl,e2:up?zh:zl,sl,tp1,tp2,rr1:Math.abs(tp1-lvl)/risk,rr2:Math.abs(tp2-lvl)/risk,px0:px,dR:diverge(up,pts,zl,zh,RS.v,'r'),dM:diverge(up,pts,zl,zh,MC.m,'m')||diverge(up,pts,zl,zh,MC.h,'h'),rsiS,vp:vpRow(up,lvl,orgP,risk)}}};
+  const cand=cl.map(build).filter(Boolean);if(!cand.length)continue;
+  const best=cand.reduce((a,b)=>b.sc>a.sc?b:a);
+  // نزدیک‌ترین سطح (اگر با بهترین فرق دارد)
+  const nr=cand.reduce((a,b)=>Math.abs(b.lvl-px)<Math.abs(a.lvl-px)?b:a);
+  best.row.id+=up?'U':'D';out.push(best.row);
+  if(nr!==best){nr.row.id+=(up?'U':'D')+'n';out.push(nr.row)}
+ }
+ return out}
+
+const ana={},c15t={},TTL={'1h':6e5,'2h':12e5,'4h':18e5,'12h':36e5,'1d':36e5,'3d':36e5,'4d':36e5,'1w':36e5};let prog='';
+function fin(out){
+ const bySymbol=new Map();
+ for(const r of out){
+  if(!bySymbol.has(r.sym))bySymbol.set(r.sym,[]);
+  bySymbol.get(r.sym).push(r);
+ }
+ for(const group of bySymbol.values())for(const r of group){
+  r.conf=[...new Set(group.filter(o=>o.tf!==r.tf&&o.up===r.up&&Math.abs(o.lvl-r.lvl)/r.lvl<.004).map(o=>o.tf))];
+  r.liqS=Math.min(100,r.touches*20+r.conf.length*20+W[r.tf]);r.liq=r.liqS<40?0:r.liqS<70?1:2;
+  r.score=Math.round(Math.min(100,Math.min(r.touches,4)*12+r.strength*.3+r.conf.length*12+W[r.tf]+(r.volRatio>1.5?5:0)));
+ }
+ results=out.slice();
+}
+let scanQueued=false,pricePending=null;
+async function scan(){
+ if(!started)return;
+ if(scanning){scanQueued=true;return}
+ if(Date.now()<pauseUntil){status('⚠ مکث درخواست به بایننس؛ '+Math.ceil((pauseUntil-Date.now())/1000)+' ثانیه باقی مانده');return}
+ stopReq=false;banMsg='';errs=0;consec=0;scanning=true;status('دریافت لیست ارزها...');
+ const {top,minVol,tfs}=S;
+ const t0=performance.now(),out=[];
+ try{
+  const t=await j('ticker/24hr',40);
+  if(stopReq)return;
+  if(!Array.isArray(t)){status(banMsg||'⚠ دریافت لیست ارزها از بایننس ناموفق بود');return}
+  t.forEach(x=>{if(!price[x.symbol])price[x.symbol]=+x.lastPrice});
+  let l=t.filter(x=>/^[A-Z0-9]+USDT$/.test(x.symbol)).map(x=>({s:x.symbol,v:+x.quoteVolume})).filter(x=>x.v>=minVol*1e6).sort((a,b)=>b.v-a.v);
+  if(+top)l=l.slice(0,+top);l.forEach(x=>volMap[x.s]=x.v);
+  const funding=j('premiumIndex',10).then(fp=>{if(Array.isArray(fp)&&!stopReq)fp.forEach(x=>fund[x.symbol]=+x.lastFundingRate)});
+  const jobs=l.flatMap(x=>tfs.map(tf=>[x.s,tf])),total=jobs.length;
+  const daily=new Map(),sniperJobs=new Set(),active=new Set(jobs.map(([s,tf])=>s+'|'+tf));
+  for(const key of Object.keys(ana))if(!active.has(key))delete ana[key];
+  for(const key of history.keys())if(!active.has(key)&&!(key.endsWith('|1d')&&active.has(key.slice(0,-2)+'4d'))&&!(key.endsWith('|15m')&&l.some(x=>x.s===key.slice(0,-4))))history.delete(key);
+  results=[];prog='0/'+total;tick(true);
+  let next=0,done=0,lastPaint=0,cacheHits=0;
+  await Promise.all(Array.from({length:12},async()=>{
+   while(!stopReq&&next<total){
+    const [sym,tf]=jobs[next++],key=sym+'|'+tf,cached=ana[key];
+    let rows=cached?.r||[];
+    if(cached&&Date.now()-cached.t<TTL[tf])cacheHits++;
+    else{
+     let bars;
+     if(tf==='1d'||tf==='4d'){
+      if(!daily.has(sym))daily.set(sym,candles(sym,'1d',tfs.includes('4d')?480:300));
+      bars=await daily.get(sym);
+      if(bars)bars=tf==='4d'?aggregate4d(bars).filter(bar=>bar.end<Date.now()):bars.slice(-300);
+     }else bars=await candles(sym,tf,tf==='1w'||tf==='3d'?99:300);
+     if(bars){
+      rows=bars.length>=60?analyze(sym,tf,bars):[];
+      ana[key]={t:Date.now(),r:rows};
+     }else rows=[];
+    }
+    if(stopReq)break;
+    for(const r of rows){
+     out.push(r);
+     const px=price[sym]||r.px0;
+     if(Math.abs(r.lvl-px)/px<.10&&(!c15t[sym]||Date.now()-c15t[sym]>=6e5))sniperJobs.add(sym);
+    }
+    done++;prog=done+'/'+total;
+    if(performance.now()-lastPaint>=250){
+     lastPaint=performance.now();status('اسکن '+prog+(errs?' | خطا: '+errs:''));
+     fin(out);tick(true);
+    }
+   }
+  }));
+  fin(out);tick(true);
+  const symbols=[...sniperJobs];next=0;
+  if(symbols.length&&!stopReq)status('تکمیل داده ۱۵ دقیقه‌ای برای '+symbols.length+' ارز');
+  await Promise.all(Array.from({length:Math.min(12,symbols.length)},async()=>{
+   while(!stopReq&&next<symbols.length){
+    const sym=symbols[next++],bars=await candles(sym,'15m',22);
+    const closed=bars?.filter(bar=>bar.end<Date.now()).slice(-20);
+    if(!stopReq&&closed?.length===20){
+     c15[sym]=closed.reduce((sum,bar)=>sum+bar.h-bar.l,0)/20;c15t[sym]=Date.now();
+     if(S.sniper&&performance.now()-lastPaint>=250){lastPaint=performance.now();tick(true)}
+    }
+   }
+  }));
+  await funding;
+  if(!stopReq)status('اسکن: '+l.length+' ارز | '+out.length+' سطح | '+((performance.now()-t0)/1000).toFixed(1)+' ثانیه | کش: '+cacheHits+'/'+total+(errs?' | خطا: '+errs:''));
+ }catch(e){console.error(e);status('⚠ اسکن ناموفق بود')}
+ finally{
+  scanning=false;prog='';
+  if(stopReq)status(banMsg||'⏹ اسکن متوقف شد');
+  tick(true);
+  if(scanQueued){scanQueued=false;if(started&&!stopReq)scan()}
+ }
+}
+async function tick(skip){
+ if(!skip){
+  if(pricePending||stopReq||!started)return;
+  pricePending=j('ticker/price',2);
+  const p=await pricePending;pricePending=null;
+  if(stopReq||!started)return;
+  if(Array.isArray(p))p.forEach(x=>price[x.symbol]=+x.price);
+ }
+ const rows=live();render(rows);refreshModal(rows);
+ rows.forEach(r=>{if(started&&!stopReq&&(S.sniper?r.sn:r.near)&&r.score>=S.minScore&&!r.swept&&okDiv(r)&&okVp(r)){const k=r.id+'|'+r.lvl;if(!alerted[k]||Date.now()-alerted[k]>3e5){alerted[k]=Date.now();fire(r)}}})
+}
+const rOk=r=>!!r.dR&&(!S.rsiZone||r.dR.z);
+const okDiv=r=>S.dRsi&&S.dMacd&&S.dMode==='any'?!!(rOk(r)||r.dM):(!S.dRsi||rOk(r))&&(!S.dMacd||!!r.dM);
+const vpBonus=r=>S.vp&&r.vp?(r.vp.prem?8:0)+(r.vp.node?5:0):0;
+const okVp=r=>!S.vp||!!(r.vp&&(r.vp.prem||r.vp.node));
+const divBonus=r=>(S.dRsi&&r.dR?DIV.bonus+(r.dR.z?DIV.zoneBonus:0):0)+(S.dMacd&&r.dM?DIV.bonus:0);
+function live(){return results.map(r=>{
+ const px=price[r.sym]||r.px0,inZone=px>=r.zl&&px<=r.zh;
+ const gap=inZone?0:Math.min(Math.abs(px-r.zl),Math.abs(px-r.zh)),k15=c15[r.sym]&&Date.now()-c15t[r.sym]<9e5?gap/c15[r.sym]:null;
+ const swept=r.up?px>r.zh:px<r.zl,dp=gap/px*100,da=gap/r.A;
+ return{...r,px,dp,da,k15,score:Math.min(100,r.score+divBonus(r)+vpBonus(r)),rsiL:r.rsiS?rsiLive(r.rsiS,px):null,sn:!swept&&k15!==null&&k15<=S.snipN,inZone,swept,near:!swept&&da<=S.near&&dp<=S.nearPct}
+})}
+const lab=s=>s<35?['ضعیف',0]:s<55?['متوسط',1]:s<75?['قوی',2]:['خیلی قوی',3];
+const LL=['ضعیف','متوسط','قوی'];
+function render(rows){
+ rows=rows.filter(r=>!r.swept);if(S.sniper)rows=rows.filter(r=>r.sn);else if(S.onlyNear)rows=rows.filter(r=>r.near);
+ rows=rows.filter(r=>S.fl.includes(r.liq)&&S.fs.includes(lab(r.score)[1])&&okDiv(r)&&okVp(r));
+ rows.sort((a,b)=>S.sort==='d'?a.da-b.da:(b.near-a.near)||b.score-a.score);
+ $('#cnt').textContent=rows.length+' مورد | '+rows.filter(r=>r.near).length+' نزدیک';
+ if(!rows.length){$('#list').innerHTML='<div class="empty">'+(scanning?'اسکن در حال انجام است ('+prog+')؛ نتایج به‌تدریج می‌آیند. ':'')+(S.sniper?'فعلاً هیچ ارزی در فاصله ≤ '+S.snipN+' کندل ۱۵ دقیقه‌ای از نقدینگی نیست. اسکن ادامه دارد و به‌محض رسیدن قیمت آلارم می‌دهد.':'موردی پیدا نشد.')+(S.dRsi||S.dMacd||S.vp?' (فیلتر واگرایی/والیوم پروفایل روشن است؛ برای نتایج بیشتر «یکی از دو واگرایی» را انتخاب یا «RSI حتماً در اشباع» را خاموش کنید)':'')+'</div>';return}
+ $('#list').innerHTML=rows.map(r=>{const[lb,k]=lab(r.strength),nm=r.sym.replace('USDT','');
+  return`<div class="row ${r.near?'near':''}" data-id="${r.id}"><b>${r.near?'🔔 ':''}${nm}</b><span class="act ${r.up?'sell':'buy'}">${r.up?'پایش شورت':'پایش لانگ'}</span><span class="tf">${r.tf}</span>
+  <span class="${r.up?'g':'r'}">${r.up?'▲ لگ صعودی → سقف':'▼ لگ نزولی → کف'}</span>
+  <span class="num">${f(r.lvl)}</span><span class="m num">${r.swept?'جارو شد':r.inZone?'داخل ناحیه':r.dp.toFixed(2)+'٪'}${r.k15!==null&&!r.inZone?' ('+r.k15.toFixed(1)+' کندل ۱۵م)':''}</span>
+  <span class="m">نقدینگی: ${LL[r.liq]}</span>${S.dRsi&&r.dR?'<span class="bd ok">✓ واگرایی RSI'+(r.dR.z?' ★':'')+'</span>':''}${S.dMacd&&r.dM?'<span class="bd ok">✓ واگرایی MACD</span>':''}${S.vp&&r.vp&&(r.vp.prem||r.vp.node)?'<span class="bd ok">✓ والیوم پروفایل</span>':''}<span class="st${k}">حرکت: ${lb}</span><span class="sc">سیگنال ${r.score}</span></div>`}).join('')}
+function info(r){
+ const sh=r.up,fr=fund[r.sym],[lb]=lab(r.strength),[sg]=lab(r.score),
+ dn=sh?'منفی':'مثبت',rz=r.rsiL==null?false:sh?r.rsiL>=DIV.ob:r.rsiL<=DIV.os,
+ dt=d=>d?dn+(d.src==='h'?' (هیستوگرام)':'')+': '+f(d.a)+' → '+f(d.b)+(d.z?' · در اشباع':'')+(d.live?' (در حال شکل‌گیری)':''):'—',
+ dB=[...(S.dRsi?[['واگرایی '+dn+' RSI'+(r.dR&&r.dR.z?' (در اشباع)':''),!!r.dR],[sh?'RSI اشباع خرید (> '+DIV.ob+')':'RSI اشباع فروش (< '+DIV.os+')',rz]]:[]),...(S.dMacd?[['واگرایی '+dn+' MACD',!!r.dM]]:[])],
+ dRw=[...(S.dRsi?[['RSI (۱۴) فعلی',r.rsiL==null?'—':r.rsiL.toFixed(1),rz?(sh?'r':'g'):''],['واگرایی RSI',dt(r.dR),r.dR?(sh?'r':'g'):'']]:[]),...(S.dMacd?[['واگرایی MACD (۱۲،۲۶،۹)',dt(r.dM),r.dM?(sh?'r':'g'):'']]:[])],
+ vp=r.vp,vB=S.vp?[[sh?'سطح بالای VAH (خارج از محدوده ارزش)':'سطح زیر VAL (خارج از محدوده ارزش)',!!(vp&&vp.prem)],['نزدیک گره حجمی (POC/HVN)',!!(vp&&vp.node)]]:[],
+ vW=S.vp&&vp?[['POC',f(vp.poc)],['VAH | VAL',f(vp.vah)+' | '+f(vp.val)],['حجم در سطح',(vp.ratio<.5?'کم‌حجم':vp.ratio>1.5?'پرحجم':'متوسط')+' ('+vp.ratio.toFixed(1)+'×)'],['R:R تا POC',vp.rrPoc==null?'—':vp.rrPoc.toFixed(1),'g']]:[];
+ const act=sh?'پایش سناریوی شورت':'پایش سناریوی لانگ',state=r.swept?'قیمت از ناحیه عبور کرده؛ وضعیت بسته شدن کندل را بررسی کنید':r.inZone?'قیمت داخل ناحیه است؛ منتظر ریجکشن (واکنش) بمانید':r.near?'نزدیک ناحیه است؛ جارو و برگشت هنوز تأیید نشده':'قیمت هنوز از ناحیه فاصله دارد';
+ return{act,state,sh,title:`${r.sym.replace('USDT','')}/USDT — ${r.tf} — نقدینگی ${sh?'سقف':'کف'}`,
+ badges:[['ناحیه '+(sh?'عرضه (نقدینگی سقف)':'تقاضا (نقدینگی کف)'),true],['دقیق: ≤ '+S.snipN+' کندل ۱۵م',!!r.sn],['نزدیک به نقدینگی',r.near&&!r.swept],['تایم‌فریم '+r.tf,true],['قدرت نقدینگی: '+LL[r.liq],r.liq>=1],['قدرت سیگنال: '+sg+' ('+r.score+')',r.score>=S.minScore],['شدت حرکت: '+lb,r.strength>=55],...dB,...vB],
+ rows:[['جهت لگ',sh?'صعودی':'نزولی',sh?'g':'r'],['محدوده قیمتی نقدینگی',f(r.zl)+' – '+f(r.zh)],['قیمت فعلی',f(r.px)],
+ ['فاصله تا ناحیه (کندل ۱۵م)',r.k15===null?'—':r.k15.toFixed(2)+' کندل'],['فاصله تا نقدینگی',r.dp.toFixed(2)+'٪ ('+r.da.toFixed(2)+' ATR)'],['تعداد لمس (سطوح هم‌تراز)',r.touches],
+ ['هم‌پوشانی تایم‌فریم‌ها',r.conf.length?r.conf.join('، '):'—'],['شدت حرکت',lb+' ('+r.strength+'/100)'],
+ ['اندازه لگ',r.legATR.toFixed(1)+' ATR'],['کارایی روند (ER)',r.er.toFixed(2)],['نسبت حجم اخیر',r.volRatio.toFixed(2)+'×'],
+ ['فاندینگ',fr==null?'—':(fr*100).toFixed(4)+'٪'],['حجم ۲۴ساعته',((volMap[r.sym]||0)/1e6).toFixed(0)+'M$'],
+ ['سناریو',sh?'جارو سقف ← شورت':'جارو کف ← لانگ',sh?'r':'g'],['ورود فرضی (مبنای R:R)',f(r.entry)],['مرز بیرونی ناحیه',f(r.e2)],['استاپ (SL)',f(r.sl),'r'],
+ ['TP1 (نیمه لگ) | R:R',f(r.tp1)+' | '+r.rr1.toFixed(1),'g'],['TP2 (مبدأ لگ) | R:R',f(r.tp2)+' | '+r.rr2.toFixed(1),'g'],...dRw,...vW],
+ note:`قیمت در لگ ${sh?'صعودی':'نزولی'} به استخر نقدینگی ${sh?'بالا (استاپ شورت‌ها)':'پایین (استاپ لانگ‌ها)'} نزدیک می‌شود. سطوح ورود و خروج در جدول برآورد اولیه‌اند. جارو و برگشت کندل به محدوده باید روی چارت بررسی شود. بسته شدن کندل ${sh?'بالای':'پایین'} ناحیه یعنی ابطال. توصیه مالی نیست.`}}
+const TVI={'1h':'60','2h':'120','4h':'240','12h':'720','1d':'D','3d':'3D','4d':'D','1w':'W'};
+function modalHTML(r){const d=info(r);
+ return`<h2 style="margin:0 0 10px;font-size:18px">${d.title}</h2><div class="banner ${d.sh?'sell':'buy'}"><b>${d.act}</b><span>${d.state}</span></div><div class="bds">${d.badges.map(b=>`<span class="bd ${b[1]?'ok':''}">${b[1]?'✓':'○'} ${b[0]}</span>`).join('')}</div>
+ <div class="det">${d.rows.map(x=>`<div><span>${x[0]}</span><span class="num ${x[2]||''}">${x[1]}</span></div>`).join('')}
+ <div class="w">${d.note} <a style="color:var(--a)" target="_blank" href="https://www.tradingview.com/chart/?symbol=BINANCE:${r.sym}.P&interval=${TVI[r.tf]}">چارت در TradingView ↗</a></div></div>`}
+function refreshModal(rows){if(!open)return;const r=rows.find(x=>x.id===open);if(r){$('#mb').innerHTML=modalHTML(r);$('#mod').hidden=false}}
+function closeModal(){open=null;$('#mod').hidden=true}
+function saveImg(){
+ const r=live().find(x=>x.id===open);if(!r)return;const d=info(r),W2=960,rh=38,CM={g:'#1a7f37',r:'#cf222e','':'#1f2328'};
+ const cv=document.createElement('canvas'),x=cv.getContext('2d');x.font='15px Tahoma';
+ const bw=d.badges.map(b=>x.measureText('✓ '+b[0]).width+24);let lines=1,cur=0;bw.forEach(w=>{if(cur+w+8>W2-60){lines++;cur=0}cur+=w+8});
+ const top=140+lines*38+10,noteLines=wrap(x,d.note,W2-60),H=top+d.rows.length*rh+noteLines.length*26+80;
+ cv.width=W2*2;cv.height=H*2;const c=cv.getContext('2d');c.scale(2,2);c.direction='rtl';
+ c.fillStyle='#fff';c.fillRect(0,0,W2,H);c.fillStyle='#0969da';c.fillRect(0,0,W2,8);
+ c.fillStyle='#1f2328';c.font='bold 26px Tahoma';c.textAlign='right';c.fillText(d.title,W2-30,56);
+ c.fillStyle=d.sh?'#cf222e':'#1a7f37';c.fillRect(30,72,W2-60,52);c.fillStyle='#fff';c.textAlign='right';c.font='bold 22px Tahoma';c.fillText(d.act,W2-44,98);c.font='14px Tahoma';c.fillText(d.state,W2-44,116);
+ let bx=W2-30,by=138;c.font='15px Tahoma';
+ d.badges.forEach((b,i)=>{const w=bw[i];if(bx-w<30){bx=W2-30;by+=38}bx-=w;c.fillStyle=b[1]?'#dafbe1':'#eaeef2';c.fillRect(bx,by,w,30);c.fillStyle=b[1]?'#1a7f37':'#656d76';c.textAlign='center';c.fillText((b[1]?'✓ ':'○ ')+b[0],bx+w/2,by+20);bx-=8});
+ d.rows.forEach((q,i)=>{const y=top+i*rh;c.strokeStyle='#d0d7de';c.beginPath();c.moveTo(30,y+rh);c.lineTo(W2-30,y+rh);c.stroke();
+  c.font='15px Tahoma';c.fillStyle='#656d76';c.textAlign='right';c.fillText(q[0],W2-30,y+25);
+  c.font='bold 16px Tahoma';c.fillStyle=CM[q[2]||''];c.textAlign='left';c.direction='ltr';c.fillText(String(q[1]),30,y+25);c.direction='rtl'});
+ let y=top+d.rows.length*rh+30;c.font='14px Tahoma';c.fillStyle='#656d76';c.textAlign='right';noteLines.forEach(t=>{c.fillText(t,W2-30,y);y+=26});
+ c.fillStyle='#8c959f';c.font='12px Tahoma';c.fillText(new Date().toLocaleString('fa-IR')+' — اسکنر نقدینگی',W2-30,H-18);
+ cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`${r.sym}-${r.tf}-liquidity.png`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})}
+function wrap(x,t,w){const o=[];let l='';t.split(' ').forEach(wd=>{const n=l?l+' '+wd:wd;if(x.measureText(n).width>w&&l){o.push(l);l=wd}else l=n});if(l)o.push(l);return o}
+
+function beep(){
+ const Audio=window.AudioContext||window.webkitAudioContext;if(!S.sound||!Audio)return;ac=ac||new Audio();ac.resume().catch(()=>{});
+ const g=ac.createGain();g.gain.value=S.vol/100;const cp=ac.createDynamicsCompressor();g.connect(cp);cp.connect(ac.destination);
+ const T={siren:['square',[960,640]],beep:['sawtooth',[1100,1100]],bell:['sine',[1318,988]]}[S.tone];let t=ac.currentTime;
+ for(let i=0;i<S.rep*2;i++){const o=ac.createOscillator();o.type=T[0];o.frequency.value=T[1][i%2];o.connect(g);o.start(t);o.stop(t+.26);t+=.3}}
+function fire(r){beep();const m=`${r.sym.replace('USDT','')} ${r.tf} — نزدیک نقدینگی ${r.up?'سقف':'کف'} (${f(r.lvl)})${S.dRsi&&r.dR?' | واگرایی RSI':''}${S.dMacd&&r.dM?' | واگرایی MACD':''}${S.vp&&r.vp&&(r.vp.prem||r.vp.node)?' | والیوم پروفایل':''}`;
+ document.title='🔔 '+m;setTimeout(()=>document.title='اسکنر نقدینگی',15000);
+ try{if(Notification.permission==='granted')new Notification('آلارم نقدینگی',{body:m})}catch(e){}}
+
+// UI
+$('#fl').innerHTML=LL.map((l,i)=>`<label class="ck"><input type="checkbox" value="${i}">${l}</label>`).join('');
+$('#fs').innerHTML=['ضعیف','متوسط','قوی','خیلی قوی'].map((l,i)=>`<label class="ck"><input type="checkbox" value="${i}">${l}</label>`).join('');
+$('#tfs').innerHTML=TFS.map(t=>`<span class="chip" data-t="${t}">${t==='1w'?'۱ هفته':t==='1d'?'۱ روز':t==='3d'?'۳ روز':t==='4d'?'۴ روز':t}</span>`).join('');
+const syncUI=()=>{document.querySelectorAll('#tfs .chip').forEach(c=>c.classList.toggle('on',S.tfs.includes(c.dataset.t)));
+ ['top','minVol','near','nearPct','minScore','vol','tone','rep','every'].forEach(k=>$('#'+k).value=S[k]);
+ $('#nearV').textContent=S.near;$('#nearPctV').textContent=S.nearPct;$('#minScV').textContent=S.minScore;$('#volV').textContent=S.vol;
+ $('#mute').textContent=S.sound?'🔊':'🔇';document.querySelectorAll('#fl input').forEach(i=>i.checked=S.fl.includes(+i.value));document.querySelectorAll('#fs input').forEach(i=>i.checked=S.fs.includes(+i.value));$('#onlyNear').checked=S.onlyNear;$('#dRsi').checked=S.dRsi;$('#dMacd').checked=S.dMacd;$('#rsiZone').checked=S.rsiZone;$('#dMode').value=S.dMode;$('#vp').checked=S.vp;$('#sniper').checked=S.sniper;$('#snipN').value=S.snipN;$('#sort').value=S.sort};
+let dt;const rescan=()=>{clearTimeout(dt);dt=setTimeout(scan,800)};
+$('#tfs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;S.tfs=S.tfs.includes(t)?S.tfs.filter(x=>x!==t):[...S.tfs,t];if(!S.tfs.length)S.tfs=[t];save();syncUI();rescan()};
+['top','minVol'].forEach(k=>$('#'+k).onchange=e=>{S[k]=+e.target.value;save();rescan()});
+['near','nearPct','minScore','vol','every'].forEach(k=>$('#'+k).oninput=e=>{S[k]=+e.target.value;save();syncUI();if(k==='every')setupTimer()});
+['tone','rep','sort'].forEach(k=>$('#'+k).onchange=e=>{S[k]=k==='rep'?+e.target.value:e.target.value;save();tick(true)});
+$('#sniper').onchange=e=>{S.sniper=e.target.checked;save();tick(true)};$('#snipN').onchange=e=>{S.snipN=+e.target.value||1;save();tick(true)};
+$('#onlyNear').onchange=e=>{S.onlyNear=e.target.checked;save();tick(true)};
+['dRsi','dMacd','rsiZone','vp'].forEach(k=>$('#'+k).onchange=e=>{S[k]=e.target.checked;save();tick(true)});
+$('#dMode').onchange=e=>{S.dMode=e.target.value;save();tick(true)};
+$('#fl').onchange=e=>{S.fl=[...document.querySelectorAll('#fl input:checked')].map(i=>+i.value);save();tick(true)};
+$('#fs').onchange=e=>{S.fs=[...document.querySelectorAll('#fs input:checked')].map(i=>+i.value);save();tick(true)};
+$('#x').onclick=closeModal;$('#mod').onclick=e=>{if(e.target.id==='mod')closeModal()};$('#img').onclick=saveImg;document.onkeydown=e=>{if(e.key==='Escape')closeModal()};
+$('#mute').onclick=()=>{S.sound=!S.sound;save();syncUI()};
+$('#cfg').onclick=()=>$('#panel').hidden=!$('#panel').hidden;
+$('#test').onclick=()=>{const s=S.sound;S.sound=true;beep();S.sound=s};
+$('#list').onclick=e=>{const r=e.target.closest('.row');if(!r)return;open=r.dataset.id;tick(true)};
+let pt;const setupTimer=()=>{clearInterval(pt);pt=setInterval(()=>started&&tick(),Math.max(2,S.every)*1000)};
+const go2=()=>{if(!started)return;if(scanning){setTimeout(go2,100);return}stopReq=false;scan();setupTimer();tick()};
+$('#stop').onclick=()=>{started=false;stopReq=true;scanQueued=false;requests.forEach(request=>request.abort());clearInterval(pt);$('#stop').hidden=true;$('#go').textContent='▶ شروع مجدد';status('⏹ متوقف شد (اسکن، قیمت زنده و آلارم خاموش‌اند)')};
+$('#go').onclick=()=>{started=true;$('#stop').hidden=false;try{Notification.requestPermission()}catch(e){}const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){ac=ac||new Audio();ac.resume().catch(()=>{})}$('#go').textContent='⟳ اسکن مجدد';go2()};
+setInterval(()=>started&&!scanning&&scan(),3*60*1000);
+syncUI();
+</script></body></html>
