@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>اسکنر خط روند ۳ برخوردی</title><style>
+:root{--bg:#0f1318;--c:#181e26;--b:#2a323d;--t:#e6e9ee;--m:#8a94a3;--g:#2ebd85;--r:#f6465d;--y:#f0b90b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px Tahoma,system-ui,sans-serif;padding:12px}
+h1{font-size:17px;margin:0 0 10px}.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+button{background:var(--y);color:#111;border:0;border-radius:6px;padding:7px 18px;font-weight:700;cursor:pointer}button.s{background:var(--r);color:#fff}
+.set{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;background:var(--c);border:1px solid var(--b);border-radius:8px;padding:10px;margin-bottom:10px}
+label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--m)}label.ck{flex-direction:row;align-items:center;gap:6px;color:var(--t)}
+input,select{background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:5px;padding:5px;width:100%}input[type=checkbox]{width:auto}
+.main{display:grid;grid-template-columns:3fr 1fr;gap:10px}@media(max-width:900px){.main{grid-template-columns:1fr}}
+.box{background:var(--c);border:1px solid var(--b);border-radius:8px;overflow:auto;max-height:70vh}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--b);white-space:nowrap}th{position:sticky;top:0;background:var(--c);color:var(--m)}
+a{color:#7cb7ff;text-decoration:none}.dn{color:var(--r)}.up{color:var(--g)}.l1{background:#f0b90b18}.l2{background:#ff8a0030}.l3{background:#f6465d30}
+.log div{padding:6px 8px;border-bottom:1px solid var(--b);font-size:12px}.m{color:var(--m)}#pg{height:3px;background:var(--y);width:0;transition:width .3s}
+</style></head><body>
+<h1>اسکنر خط روند ۳ برخوردی + محدودهٔ برخورد سوم (فیوچرز بایننس)</h1>
+<div class="bar"><button id="go">شروع</button><span id="st" class="m">آماده</span></div><div id="pg"></div>
+<div class="set">
+<label class="ck"><input type="checkbox" id="tf15" checked>15 دقیقه</label><label class="ck"><input type="checkbox" id="tf1h" checked>1 ساعت</label><label class="ck"><input type="checkbox" id="tf4h" checked>4 ساعت</label>
+<label>حداقل حجم ۲۴ساعته (میلیون$)<input id="vol" type="number" value="20"></label>
+<label>تعداد ارزهای اسکن<input id="top" type="number" value="120"></label>
+<label>N پیوت (کندل چپ/راست)<input id="N" type="number" value="5"></label>
+<label>درجه سختگیری برخورد<select id="lvl"><option value="1">۱ - آزاد</option><option value="2">۲ - متوسط</option><option value="3" selected>۳ - سختگیرانه</option><option value="4">۴ - خیلی سختگیرانه</option><option value="5">۵ - حداکثر</option></select></label>
+<label>فاصلهٔ اسکن (ثانیه)<input id="every" type="number" value="60"></label>
+<label>جهت<select id="dir"><option value="all">همه</option><option value="down">نزولی (مقاومت)</option><option value="up">صعودی (حمایت)</option></select></label>
+<label>حداقل وضعیت<select id="min"><option value="0">فعال (همه)</option><option value="1">لمس</option><option value="2">خروج با سایه</option><option value="3">شکست کامل</option></select></label>
+<label class="ck"><input type="checkbox" id="sound" checked>صدا</label><label class="ck"><input type="checkbox" id="notif">اعلان مرورگر</label>
+</div>
+<div class="main"><div class="box"><table><thead><tr><th>ارز</th><th>تایم</th><th>روند</th><th>برخورد</th><th>محدوده</th><th>قیمت</th><th>فاصله٪</th><th>وضعیت</th><th>امتیاز</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="box log" id="lg"><div class="m">گزارش اعلان‌ها</div></div></div>
+<div id="md" style="display:none;position:fixed;inset:0;background:#000c;z-index:9;padding:16px;overflow:auto" onclick="this.style.display='none'"><div><select id="zm" onclick="event.stopPropagation()" onchange="show(cur)" style="width:auto;margin-bottom:8px"><option value="2" selected>نمای نزدیک (اطراف برخورد ۳ تا آخر)</option><option value="1">از نقطهٔ A تا آخر</option><option value="0">همهٔ ۳۰۰ کندل</option></select></div><canvas id="cv" width="1100" height="520" style="background:#0f1318;max-width:100%;border-radius:8px"></canvas><div id="cap" class="m" style="margin-top:8px"></div></div>
+<script>
+const $=s=>document.querySelector(s),F='https://fapi.binance.com',TFW={'15m':1,'1h':2,'4h':3},LV=['فعال','🔔 لمس محدوده','⚠️ خروج با سایه','🚨 شکست کامل'];
+const ids=['tf15','tf1h','tf4h','vol','top','N','lvl','every','dir','min','sound','notif'];
+try{const s=JSON.parse(localStorage.getItem('tz')||'{}');ids.forEach(i=>{if(i in s){const e=$('#'+i);e.type=='checkbox'?e.checked=s[i]:e.value=s[i]}})}catch(e){}
+function cfg(){const c={};ids.forEach(i=>{const e=$('#'+i);c[i]=e.type=='checkbox'?e.checked:e.type=='number'?+e.value:e.value});return c}
+ids.forEach(i=>$('#'+i).addEventListener('change',()=>{try{localStorage.setItem('tz',JSON.stringify(cfg()))}catch(e){}if(['lvl','N','tf15','tf1h','tf4h'].includes(i))base=0;if(i=='notif'&&$('#notif').checked&&window.Notification)Notification.requestPermission();render()}));
+let Z=new Map(),px={},run=0,base=0,ws=null,tm=null,ac=null;
+const f=x=>x>=100?x.toFixed(2):x>=1?x.toFixed(4):x.toPrecision(4);
+function atr(k,p=14){let s=0,n=0;for(let i=Math.max(1,k.length-1-p);i<k.length-1;i++){const a=k[i],pc=k[i-1].c;s+=Math.max(a.h-a.l,Math.abs(a.h-pc),Math.abs(a.l-pc));n++}return n?s/n:0.01}
+const PR=[0,{tt:.3,pc:9,gap:3,ll:0,rx:0},{tt:.2,pc:.5,gap:4,ll:1,rx:0},{tt:.12,pc:.3,gap:5,ll:1,rx:.3},{tt:.08,pc:.15,gap:6,ll:1,rx:.6},{tt:.05,pc:.08,gap:8,ll:1,rx:1}];
+function pivH(cl,N){const P=[];for(let i=2;i<cl.length-N;i++){let ok=1;for(let j=i-2;j<=i+N;j++)if(j!=i&&cl[j].h>cl[i].h){ok=0;break}
+ if(!ok)continue;const l=P[P.length-1];if(l==null||i-l>=3)P.push(i);else if(cl[i].h>cl[l].h)P[P.length-1]=i}return P}
+function pivL(cl,N){const P=[];for(let i=N;i<cl.length-N;i++){let ok=1;for(let j=i-N;j<=i+N;j++)if(j!=i&&cl[j].l<cl[i].l){ok=0;break}if(ok&&(!P.length||i-P[P.length-1]>=3))P.push(i)}return P}
+// k: کندل‌ها در فضای لگاریتمی (حالت صعودی آینه‌ای). lv: درجهٔ سختگیری ۱ تا ۵
+// tt=تلورانس برخورد، pc=حداکثر نفوذ سایه بالای خط، gap=فاصلهٔ برخوردها، ll=شرط کف پایین‌تر، rx=حداقل واکنش (×ATR) بعد از برخورد
+function analyze(k,N,lv){
+ const p=PR[lv],n=k.length-1,cl=k.slice(0,n),ar=atr(k),tt=Math.max(p.tt*ar,0.0008),pc=p.pc*ar,ct=tt*.5;
+ if(p.ll){const W=pivL(cl,N);if(W.length<2||cl[W[W.length-1]].l>=cl[W[W.length-2]].l)return null}
+ const R=pivH(cl,N).slice(-10);let best=null;
+ for(let x=0;x<R.length;x++)for(let y=x+1;y<R.length;y++){
+  const a=R[x],b=R[y];if(b-a<8||b-a>150||cl[a].h<=cl[b].h)continue;
+  const sl=(cl[b].h-cl[a].h)/(b-a),L=i=>cl[a].h+sl*(i-a),T=[a,b];
+  for(let i=b+1;i<n-2;i++){ // برخورد روی همهٔ کندل‌ها، نه فقط پیوت‌ها
+   const d=cl[i].h-L(i);if(Math.abs(d)>tt||cl[i].c>L(i)+ct)continue;
+   let lm=1;for(let j=i-2;j<=i+2;j++)if(j!=i&&cl[j].h>cl[i].h){lm=0;break}if(!lm)continue;
+   if(p.rx){let m=1e9;for(let j=i+1;j<=Math.min(i+5,n-1);j++)m=Math.min(m,cl[j].l);if(cl[i].h-m<p.rx*ar)continue}
+   const q=T[T.length-1];
+   if(i-q>=p.gap)T.push(i);else if(T.length>2&&Math.abs(d)<Math.abs(cl[q].h-L(q)))T[T.length-1]=i;
+  }
+  if(T.length<3)continue;const t3=T[2];if(n-t3>200)continue;
+  let bad=0;for(let i=a;i<=t3;i++)if(cl[i].c>L(i)+ct||cl[i].h>L(i)+pc){bad=1;break}if(bad)continue;
+  const sc=T.length*10+(t3-a)/10;if(!best||sc>best.sc)best={sc,a,b,t3,T:T.slice(),tc:T.length,sl,la:cl[a].h};
+ }
+ if(!best)return null;
+ const c=cl[best.t3],top=c.h;let bot=Math.min(Math.max(c.o,c.c),top-0.3*ar);bot=Math.max(bot,top-1.5*ar);
+ let lvl=0,br=-1;for(let i=best.t3+3;i<=n;i++){if(k[i].h>=bot)lvl=Math.max(lvl,1);if(k[i].h>top)lvl=Math.max(lvl,2);if(k[i].c>top){lvl=3;if(br<0)br=i}}
+ if(lvl==3&&br<n-2)return null;
+ return{...best,top,bot,lvl};
+}
+let cur=null;
+function show(k){const z=Z.get(k);if(!z)return;cur=k;const r=z.raw,l=z.ln,m=$('#zm').value,s=m=='0'?0:m=='2'?Math.max(0,l.t3-30):Math.max(0,l.a-12),W=1100,H=520,g=$('#cv').getContext('2d'),dn=z.dir=='down',R=72,n=r.length-1,a0=Math.max(l.a,s);
+ const lp=i=>{const v=l.la+l.sl*(i-l.a);return Math.exp(dn?v:-v)};let hi=-1e9,lo=1e9;
+ for(let i=s;i<=n;i++){hi=Math.max(hi,r[i].h);lo=Math.min(lo,r[i].l)}
+ const dh=hi,dl=lo;hi=Math.max(hi,z.top,lp(n),lp(a0));lo=Math.min(lo,z.bot,lp(n),lp(a0));
+ const pad=(Math.log(hi)-Math.log(lo))*.06,y0=Math.log(lo)-pad,y1=Math.log(hi)+pad,y=v=>H-26-(Math.log(v)-y0)/(y1-y0)*(H-52),sp=(W-20-R)/(n+1-s),x=i=>20+(i-s+.5)*sp;
+ g.fillStyle='#0f1318';g.fillRect(0,0,W,H);g.font='11px Tahoma';
+ for(let t=0;t<=6;t++){const v=Math.exp(y0+(y1-y0)*t/6),yy=y(v);g.strokeStyle='#222a35';g.beginPath();g.moveTo(20,yy);g.lineTo(W-R,yy);g.stroke();g.fillStyle='#8a94a3';g.fillText(f(v),W-R+6,yy+4)}
+ g.fillStyle='rgba(240,185,11,.25)';g.fillRect(x(l.t3),y(z.top),W-R-x(l.t3),Math.max(2,y(z.bot)-y(z.top)));
+ for(let i=s;i<=n;i++){const c=r[i],u=c.c>=c.o;g.strokeStyle=g.fillStyle=u?'#2ebd85':'#f6465d';g.beginPath();g.moveTo(x(i),y(c.h));g.lineTo(x(i),y(c.l));g.stroke();
+  const t=y(Math.max(c.o,c.c));g.fillRect(x(i)-Math.max(1,sp*.3),t,Math.max(2,sp*.6),Math.max(1,y(Math.min(c.o,c.c))-t))}
+ g.strokeStyle='#7cb7ff';g.lineWidth=1.5;g.beginPath();g.moveTo(x(a0),y(lp(a0)));g.lineTo(x(n),y(lp(n)));g.stroke();g.lineWidth=1;
+ g.font='bold 13px Tahoma';l.T.forEach((j,i)=>{if(j<s)return;const py=y(dn?r[j].h:r[j].l),ty=dn?py-18:py+24;g.strokeStyle='#f0b90b';g.beginPath();g.arc(x(j),py,7,0,7);g.stroke();
+  g.fillStyle='#0f1318';g.fillRect(x(j)-8,ty-12,16,16);g.fillStyle='#f0b90b';g.fillText(i+1,x(j)-4,ty+1)});
+ g.font='12px Tahoma';g.fillStyle='#7cb7ff';g.fillText('— خط روند',24,16);g.fillStyle='#f0b90b';g.fillText(`○ برخوردها   ▭ محدوده: ${f(z.bot)} تا ${f(z.top)}`,110,16);
+ const e=r[n];
+ $('#cap').textContent=`${z.sym} ${z.tf} (فیوچرز USDⓈ-M) ${dn?'نزولی':'صعودی'} — برخوردها: `+l.T.map((j,i)=>`${i+1}) ${new Date(r[j].t).toLocaleString('fa-IR')}`).join(' | ')+` — آخرین کندل: ${new Date(e.t).toLocaleString('fa-IR')} کلوز ${f(e.c)} | بیشترین ${f(dh)} کمترین ${f(dl)} (${n+1-s} کندل)`;
+ $('#md').style.display='block'}
+function beep(){if(!$('#sound').checked)return;try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=.15;o.start();o.stop(ac.currentTime+.25)}catch(e){}}
+function alertZ(z,l){const t=new Date().toLocaleTimeString('fa-IR'),m=`${z.sym} ${z.tf} ${z.dir=='down'?'نزولی':'صعودی'} — ${l==-1?'محدودهٔ جدید (برخورد سوم)':LV[l]} @ ${f(z.price||z.top)}`;
+ const d=document.createElement('div');d.innerHTML=`<span class="m">${t}</span> ${m}`;const lg=$('#lg');lg.insertBefore(d,lg.children[1]||null);beep();
+ if($('#notif').checked&&window.Notification&&Notification.permission=='granted')new Notification(m)}
+function tickLv(z,p){return z.dir=='down'?(p>z.top?2:p>=z.bot?1:0):(p<z.bot?2:p<=z.top?1:0)}
+async function jget(u){const r=await fetch(u);const j=await r.json().catch(()=>null);if(!r.ok||!j||j.code){const e=new Error((j&&j.msg?j.msg:'پاسخ نامعتبر')+' (HTTP '+r.status+')');e.st=r.status;throw e}return j}
+async function scanOne(sym,tf,c,out){
+ const r=await jget(`${F}/fapi/v1/klines?symbol=${sym}&interval=${tf}&limit=300`);if(!Array.isArray(r)||r.length<60)return;
+ const raw=r.map(x=>({t:x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4]})),lg=x=>Math.log(x);
+ const dn=raw.map(x=>({o:lg(x.o),h:lg(x.h),l:lg(x.l),c:lg(x.c)})),up=raw.map(x=>({o:-lg(x.o),h:-lg(x.l),l:-lg(x.h),c:-lg(x.c)})),last=raw[raw.length-1].c;
+ for(const dir of['down','up']){const a=analyze(dir=='down'?dn:up,c.N,+c.lvl);if(!a)continue;
+  const top=dir=='down'?Math.exp(a.top):Math.exp(-a.bot),bot=dir=='down'?Math.exp(a.bot):Math.exp(-a.top);
+  out.push({key:`${sym}|${tf}|${dir}|${raw[a.t3].t}`,sym,tf,dir,tc:a.tc,top,bot,lvl:a.lvl,price:px[sym]||last,score:0,raw,ln:a})}
+}
+function finish(out){
+ out.forEach(z=>{const o=Z.get(z.key);if(o)z.lvl=Math.max(z.lvl,o.lvl);z.score=z.tc+TFW[z.tf]*2});
+ out.forEach(z=>{if(out.some(o=>o.sym==z.sym&&o.tf!=z.tf&&o.dir==z.dir&&o.bot<=z.top&&o.top>=z.bot))z.score+=2});
+ if(base)out.forEach(z=>{const o=Z.get(z.key);if(!o){alertZ(z,-1);if(z.lvl>0)alertZ(z,z.lvl)}else if(z.lvl>o.lvl)alertZ(z,z.lvl)});
+ Z=new Map(out.map(z=>[z.key,z]));
+}
+async function pool(j,n,fn){let i=0,er=null;await Promise.all(Array.from({length:n},async()=>{while(i<j.length){const x=j[i++];try{await fn(x)}catch(e){if(e.st==429||e.st==418){er=e;i=j.length}}}}));if(er)throw er}
+async function cycle(){
+ const c=cfg(),tfs=[c.tf15&&'15m',c.tf1h&&'1h',c.tf4h&&'4h'].filter(Boolean);
+ $('#st').textContent='در حال دریافت لیست ارزها...';
+ const tk=await jget(F+'/fapi/v1/ticker/24hr');
+ const L=tk.filter(x=>x.symbol.endsWith('USDT')&&!x.symbol.includes('_')&&+x.quoteVolume>=c.vol*1e6).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,c.top);
+ const jobs=[];L.forEach(x=>tfs.forEach(tf=>jobs.push([x.symbol,tf])));const out=[];let d=0;
+ await pool(jobs,5,async j=>{if(!run)return;await scanOne(j[0],j[1],c,out);d++;$('#pg').style.width=d/jobs.length*100+'%';$('#st').textContent=`اسکن ${d}/${jobs.length}`});
+ finish(out);base=1;render();$('#st').textContent=`آخرین اسکن: ${new Date().toLocaleTimeString('fa-IR')} — ${Z.size} محدوده`;
+}
+function render(){
+ const c=cfg(),a=[...Z.values()].filter(z=>(c.dir=='all'||z.dir==c.dir)&&z.lvl>=+c.min).sort((x,y)=>y.lvl-x.lvl||y.score-x.score);
+ $('#tb').innerHTML=a.map(z=>{const p=z.price,d=p?(p<z.bot?z.bot/p-1:p>z.top?z.top/p-1:0)*100:0;
+  return`<tr class="l${z.lvl}" data-k="${z.key}" style="cursor:pointer"><td><a target="_blank" href="https://www.binance.com/en/futures/${z.sym}">${z.sym}</a></td><td>${z.tf}</td><td class="${z.dir}">${z.dir=='down'?'نزولی ▼':'صعودی ▲'}</td><td>${z.tc}</td><td>${f(z.bot)} – ${f(z.top)}</td><td>${p?f(p):'-'}</td><td>${d.toFixed(2)}</td><td>${LV[z.lvl]}</td><td>${z.score}</td></tr>`}).join('')}
+$('#tb').onclick=e=>{const r=e.target.closest('tr');if(r&&!e.target.closest('a'))show(r.dataset.k)};
+function connect(){const w=ws=new WebSocket('wss://fstream.binance.com/ws/!miniTicker@arr');let last=0;
+ ws.onmessage=e=>{JSON.parse(e.data).forEach(t=>px[t.s]=+t.c);if(!base)return;let ch=0;
+  Z.forEach(z=>{const p=px[z.sym];if(!p)return;z.price=p;const l=tickLv(z,p);if(l>z.lvl){z.lvl=l;alertZ(z,l);ch=1}});
+  if(ch||Date.now()-last>2500){last=Date.now();render()}};
+ ws.onclose=()=>{if(run&&ws===w)setTimeout(connect,2000)}}
+let lid=0;
+async function loop(id){if(!run||id!=lid)return;let w=Math.max(10,cfg().every)*1000;
+ try{await cycle()}catch(e){const rl=e.st==429||e.st==418;$('#st').textContent='خطا در دریافت داده: '+e.message+(rl?' — محدودیت درخواست بایننس؛ بعد از وقفه دوباره تلاش می‌شود':e.st==451?' — دسترسی از این منطقه محدود است':'');if(rl)w=Math.max(w,e.st==418?300000:120000)}
+ if(run&&id==lid)tm=setTimeout(()=>loop(id),w)}
+$('#go').onclick=()=>{run=!run;$('#go').textContent=run?'توقف':'شروع';$('#go').className=run?'s':'';
+ if(run){base=0;Z=new Map();lid++;connect();loop(lid)}else{lid++;clearTimeout(tm);ws&&ws.close();$('#st').textContent='متوقف شد'}};
+</script></body></html>
